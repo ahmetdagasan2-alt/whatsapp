@@ -69,6 +69,13 @@ async function logDispatch(event: SapEvent, route: SapRoute | undefined, status:
   }
 }
 
+// fetch() only says "fetch failed"; the real reason (DNS, TLS, refused) is in `cause`.
+function describeError(e: unknown): string {
+  if (!(e instanceof Error)) return String(e);
+  const cause = e.cause as { code?: string; message?: string } | undefined;
+  return cause ? `${e.message} (${cause.code ?? ''} ${cause.message ?? ''})`.trim() : e.message;
+}
+
 export async function dispatchEvent(event: SapEvent): Promise<void> {
   const route = await findRoute(event);
   if (!route) {
@@ -94,7 +101,7 @@ export async function dispatchEvent(event: SapEvent): Promise<void> {
     await logDispatch(event, route, 'ok', `${res.status}`);
   } catch (e) {
     console.error('[SAP] Dispatch failed for', route.tenant_name, e);
-    await logDispatch(event, route, 'error', e instanceof Error ? e.message : String(e));
+    await logDispatch(event, route, 'error', `${url} -> ${describeError(e)}`);
   }
 }
 
