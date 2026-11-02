@@ -280,6 +280,42 @@ CREATE TABLE IF NOT EXISTS instagram_accounts (
   ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE UNIQUE INDEX IF NOT EXISTS user_app_instagram_account_key ON instagram_accounts (user_id, app_id, instagram_account_id);
+
+-- SAP routing: which SAP service receives webhooks for a given WABA / phone number.
+-- A row with phone_number_id set overrides the WABA-level row (phone_number_id NULL).
+CREATE TABLE IF NOT EXISTS sap_routes (
+  key BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  waba_id BIGINT NOT NULL,
+  phone_number_id BIGINT,
+  tenant_name VARCHAR NOT NULL,
+  base_url TEXT NOT NULL,
+  auth_type VARCHAR NOT NULL DEFAULT 'basic',   -- basic | oauth2 | none
+  credential_key VARCHAR NOT NULL,              -- secrets in env: SAP_<KEY>_USER, SAP_<KEY>_PASSWORD, ...
+  endpoints JSONB NOT NULL DEFAULT '{}',        -- {"message": "/path", "status": "/path", "call": ..., "other": ...}
+  csrf BOOLEAN NOT NULL DEFAULT TRUE,
+  enabled BOOLEAN NOT NULL DEFAULT TRUE,
+  last_updated TIMESTAMP,
+  ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE UNIQUE INDEX IF NOT EXISTS sap_route_waba_key ON sap_routes (waba_id) WHERE phone_number_id IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS sap_route_phone_key ON sap_routes (phone_number_id) WHERE phone_number_id IS NOT NULL;
+
+CREATE TABLE IF NOT EXISTS sap_dispatch_log (
+  key BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  route_key BIGINT,
+  waba_id BIGINT,
+  phone_number_id BIGINT,
+  event_type VARCHAR,
+  message_id VARCHAR,
+  status VARCHAR,                               -- ok | error | skipped | no_route
+  detail TEXT,
+  ts TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Example: route company A's WABA to its S/4HANA OData service
+-- INSERT INTO sap_routes (waba_id, tenant_name, base_url, auth_type, credential_key, endpoints)
+-- VALUES (123456789012345, 'Firma A', 'https://s4.firma-a.com/sap/opu/odata/sap/ZWA_INBOUND_SRV',
+--         'basic', 'FIRMA_A', '{"message": "/MessageSet", "status": "/StatusSet"}');
 ```
 
 </details>

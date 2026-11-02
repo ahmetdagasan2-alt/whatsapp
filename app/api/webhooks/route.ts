@@ -3,13 +3,14 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse, after, type NextRequest } from 'next/server';
 
 import Ably from 'ably';
 import crypto from 'crypto';
 import { sql } from '@vercel/postgres';
 
 import { getAckBotStatus, getAckBotMessage, send } from '@/app/api/beUtils';
+import { dispatchWebhookToSap } from '@/app/api/sap/sapRouter';
 import privateConfig from '@/app/privateConfig';
 
 export const dynamic = 'force-dynamic';
@@ -48,6 +49,9 @@ export async function POST(request: NextRequest) {
     }
 
     const data = JSON.parse(rawBody);
+
+    // Forward to the tenant's SAP system after responding, so Meta gets a fast 200.
+    after(() => dispatchWebhookToSap(data).catch((e) => console.error('[SAP] dispatch error:', e)));
     const { ablyKey } = await privateConfig();
 
     const ably = new Ably.Realtime({ key: ablyKey, clientId: 'webhook_server' });
