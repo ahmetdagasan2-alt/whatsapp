@@ -116,6 +116,17 @@ export interface SapRequest {
   timeoutMs?: number;
 }
 
+// SAP logon/error pages are HTML with a large <style> block; keep only the text.
+function readableBody(body: string): string {
+  if (!/<html/i.test(body)) return body;
+  return body
+    .replace(/<(style|script)[\s\S]*?<\/\1>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export async function callSap(creds: SapCredentials, req: SapRequest): Promise<{ status: number; body: string }> {
   const url = withSapClient(req.url, creds.sapClient);
   const headers: Record<string, string> = {
@@ -144,6 +155,6 @@ export async function callSap(creds: SapCredentials, req: SapRequest): Promise<{
   });
   const body = await res.text();
   sapDebug('9. callSap: response', { status: res.status, body: body.slice(0, 2000) });
-  if (!res.ok) throw new Error(`SAP ${res.status} ${req.method ?? 'POST'} ${req.url}: ${body.slice(0, 500)}`);
+  if (!res.ok) throw new Error(`SAP ${res.status} ${req.method ?? 'POST'} ${req.url}: ${readableBody(body).slice(0, 1000)}`);
   return { status: res.status, body };
 }
