@@ -9,6 +9,7 @@ import { sql } from '@vercel/postgres';
 
 import { callSap, loadCredentials, type SapAuthType } from '@/app/api/sap/sapClient';
 import { extractSapEvents, type SapEvent, type SapEventType } from '@/app/api/sap/events';
+import { sapDebug } from '@/app/api/sap/debug';
 
 export interface SapRoute {
   key: string;
@@ -24,6 +25,7 @@ export interface SapRoute {
 }
 
 async function findRoute(event: SapEvent): Promise<SapRoute | undefined> {
+  sapDebug('3. findRoute: looking up sap_routes', { wabaId: event.wabaId, phoneNumberId: event.phoneNumberId });
   const { rows } = await sql<SapRoute>`
     SELECT key, waba_id::text, phone_number_id::text, tenant_name, base_url, auth_type,
            credential_key, endpoints, csrf, enabled
@@ -34,6 +36,7 @@ async function findRoute(event: SapEvent): Promise<SapRoute | undefined> {
     ORDER BY phone_number_id IS NULL
     LIMIT 1
   `;
+  sapDebug('3. findRoute: result', rows[0] ?? '(no matching enabled route)');
   return rows[0];
 }
 
@@ -86,26 +89,38 @@ export async function dispatchEvent(event: SapEvent): Promise<void> {
 
   const path = route.endpoints?.[event.eventType];
   if (!path) {
+    sapDebug('4. dispatchEvent: SKIPPED, no endpoint for event type', { eventType: event.eventType, endpoints: route.endpoints });
     await logDispatch(event, route, 'skipped', `no endpoint for ${event.eventType}`);
     return;
   }
 
   const url = route.base_url.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, '');
+  const body = buildSapPayload(event, route);
+  sapDebug('4. dispatchEvent: target URL', { tenant: route.tenant_name, eventType: event.eventType, url });
+  sapDebug('5. dispatchEvent: payload sent to SAP', body);
+  const startedAt = Date.now();
   try {
     const res = await callSap(loadCredentials(route.credential_key, route.auth_type), {
       url,
-      body: buildSapPayload(event, route),
+      body,
       csrf: route.csrf,
     });
+    sapDebug(`10. dispatchEvent: SUCCESS in ${Date.now() - startedAt}ms`, { status: res.status, response: res.body.slice(0, 1000) });
     console.log('[SAP] Dispatched', event.eventType, 'to', route.tenant_name, res.status);
     await logDispatch(event, route, 'ok', `${res.status}`);
   } catch (e) {
     console.error('[SAP] Dispatch failed for', route.tenant_name, e);
+    sapDebug(`10. dispatchEvent: FAILED after ${Date.now() - startedAt}ms`, { url, error: describeError(e) });
     await logDispatch(event, route, 'error', `${url} -> ${describeError(e)}`);
   }
 }
 
 export async function dispatchWebhookToSap(payload: unknown): Promise<void> {
+  sapDebug('1. dispatchWebhookToSap: webhook received', payload);
   const events = extractSapEvents(payload as Parameters<typeof extractSapEvents>[0]);
+  sapDebug(
+    `2. extractSapEvents: ${events.length} event(s)`,
+    events.map(({ raw: _raw, ...e }) => e),
+  );
   await Promise.allSettled(events.map(dispatchEvent));
 }

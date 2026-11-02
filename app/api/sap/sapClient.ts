@@ -5,6 +5,8 @@
 // Credentials are never stored in the DB: a route only stores a `credential_key`,
 // and secrets are read from env vars named SAP_<CREDENTIAL_KEY>_<FIELD>.
 
+import { mask, sapDebug } from '@/app/api/sap/debug';
+
 export type SapAuthType = 'basic' | 'oauth2' | 'none';
 
 export interface SapCredentials {
@@ -20,6 +22,16 @@ export interface SapCredentials {
 export function loadCredentials(credentialKey: string, authType: SapAuthType): SapCredentials {
   const prefix = `SAP_${credentialKey.toUpperCase().replace(/[^A-Z0-9]/g, '_')}_`;
   const env = (name: string) => process.env[prefix + name];
+  sapDebug('6. loadCredentials: env vars', {
+    authType,
+    prefix,
+    [`${prefix}USER`]: env('USER') ?? '(missing)',
+    [`${prefix}PASSWORD`]: mask(env('PASSWORD')),
+    [`${prefix}CLIENT`]: env('CLIENT') ?? '(missing)',
+    [`${prefix}TOKEN_URL`]: env('TOKEN_URL') ?? '(missing)',
+    [`${prefix}CLIENT_ID`]: env('CLIENT_ID') ?? '(missing)',
+    [`${prefix}CLIENT_SECRET`]: mask(env('CLIENT_SECRET')),
+  });
   return {
     authType,
     username: env('USER'),
@@ -39,7 +51,11 @@ async function getOAuthToken(creds: SapCredentials): Promise<string> {
   }
   const cacheKey = `${creds.tokenUrl}|${creds.clientId}`;
   const cached = tokenCache.get(cacheKey);
-  if (cached && cached.expiresAt > Date.now() + 30_000) return cached.token;
+  if (cached && cached.expiresAt > Date.now() + 30_000) {
+    sapDebug('7. OAuth: using cached token');
+    return cached.token;
+  }
+  sapDebug('7. OAuth: requesting token', { tokenUrl: creds.tokenUrl, clientId: creds.clientId });
 
   const res = await fetch(creds.tokenUrl, {
     method: 'POST',
@@ -49,6 +65,7 @@ async function getOAuthToken(creds: SapCredentials): Promise<string> {
     },
     body: 'grant_type=client_credentials',
   });
+  sapDebug('7. OAuth: token response', { status: res.status });
   if (!res.ok) throw new Error(`SAP OAuth token request failed: ${res.status} ${await res.text()}`);
   const data = (await res.json()) as { access_token: string; expires_in?: number };
   tokenCache.set(cacheKey, { token: data.access_token, expiresAt: Date.now() + (data.expires_in ?? 3600) * 1000 });
@@ -75,6 +92,7 @@ function withSapClient(url: string, sapClient?: string): string {
 }
 
 async function fetchCsrf(url: string, headers: Record<string, string>): Promise<{ token?: string; cookie?: string }> {
+  sapDebug('8. CSRF: fetching token (HEAD)', { url });
   const res = await fetch(url, { method: 'HEAD', headers: { ...headers, 'X-CSRF-Token': 'Fetch' } });
   const token = res.headers.get('x-csrf-token') ?? undefined;
   // SAP binds the CSRF token to the session cookies, so they must be sent back.
@@ -82,6 +100,11 @@ async function fetchCsrf(url: string, headers: Record<string, string>): Promise<
     .getSetCookie?.()
     .map((c) => c.split(';')[0])
     .join('; ');
+  sapDebug('8. CSRF: response', {
+    status: res.status,
+    token: token ? mask(token) : '(none returned)',
+    cookies: cookie ? cookie.split('; ').map((c) => c.split('=')[0]) : [],
+  });
   return { token, cookie: cookie || undefined };
 }
 
@@ -107,6 +130,12 @@ export async function callSap(creds: SapCredentials, req: SapRequest): Promise<{
     if (cookie) headers['Cookie'] = cookie;
   }
 
+  sapDebug('9. callSap: sending request', {
+    method: req.method ?? 'POST',
+    url,
+    authType: creds.authType,
+    headers: Object.keys(headers),
+  });
   const res = await fetch(url, {
     method: req.method ?? 'POST',
     headers,
@@ -114,6 +143,7 @@ export async function callSap(creds: SapCredentials, req: SapRequest): Promise<{
     signal: AbortSignal.timeout(req.timeoutMs ?? 15_000),
   });
   const body = await res.text();
+  sapDebug('9. callSap: response', { status: res.status, body: body.slice(0, 2000) });
   if (!res.ok) throw new Error(`SAP ${res.status} ${req.method ?? 'POST'} ${req.url}: ${body.slice(0, 500)}`);
   return { status: res.status, body };
 }

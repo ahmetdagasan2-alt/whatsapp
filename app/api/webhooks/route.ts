@@ -50,7 +50,9 @@ export async function POST(request: NextRequest) {
 
     const data = JSON.parse(rawBody);
 
+    console.log('[SAP:DEBUG] 0. webhook route: signature OK, scheduling SAP dispatch');
     // Forward to the tenant's SAP system after responding, so Meta gets a fast 200.
+    debugger;
     after(() => dispatchWebhookToSap(data).catch((e) => console.error('[SAP] dispatch error:', e)));
     const { ablyKey } = await privateConfig();
 
