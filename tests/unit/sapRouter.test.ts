@@ -44,13 +44,25 @@ const route = {
 describe('extractSapEvents', () => {
   it('extracts message with waba and phone ids', () => {
     const [ev] = extractSapEvents(messagePayload);
-    expect(ev).toMatchObject({
-      eventType: 'message',
-      wabaId: '111',
-      phoneNumberId: '222',
-      from: '905559998877',
-      contactName: 'Ali',
-      text: 'Sipariş durumu?',
+    expect(ev).toMatchObject({ eventType: 'message', wabaId: '111', phoneNumberId: '222', messageId: 'wamid.1' });
+  });
+
+  it('keeps a single-change webhook exactly as received', () => {
+    const [ev] = extractSapEvents(messagePayload);
+    expect(ev.payload).toEqual(messagePayload);
+  });
+
+  it('splits multi-number webhooks into one Meta-shaped payload per change', () => {
+    const changeA = { field: 'messages', value: { metadata: { phone_number_id: '222' }, messages: [{ id: 'wamid.a' }] } };
+    const changeB = { field: 'messages', value: { metadata: { phone_number_id: '333' }, messages: [{ id: 'wamid.b' }] } };
+    const events = extractSapEvents({
+      object: 'whatsapp_business_account',
+      entry: [{ id: '111', time: 1700000000, changes: [changeA, changeB] }],
+    });
+    expect(events.map((e) => e.phoneNumberId)).toEqual(['222', '333']);
+    expect(events[1].payload).toEqual({
+      object: 'whatsapp_business_account',
+      entry: [{ id: '111', time: 1700000000, changes: [changeB] }],
     });
   });
 
@@ -60,7 +72,7 @@ describe('extractSapEvents', () => {
       entry: [{ id: '111', changes: [{ field: 'messages', value: { metadata: { phone_number_id: '222' }, statuses: [{ id: 'wamid.2', status: 'read', recipient_id: '90555' }] } }] }],
     });
     expect(events).toHaveLength(1);
-    expect(events[0]).toMatchObject({ eventType: 'status', status: 'read', messageId: 'wamid.2' });
+    expect(events[0]).toMatchObject({ eventType: 'status', messageId: 'wamid.2' });
   });
 
   it('ignores non-whatsapp objects', () => {
@@ -90,7 +102,7 @@ describe('dispatchWebhookToSap', () => {
     expect(init.headers['X-CSRF-Token']).toBe('tok');
     expect(init.headers['Cookie']).toBe('SAP_SESSIONID=abc');
     expect(init.headers['Authorization']).toBe('Basic ' + Buffer.from('u:p').toString('base64'));
-    expect(JSON.parse(init.body)).toMatchObject({ Tenant: 'Firma A', WabaId: '111', PhoneNumberId: '222', Text: 'Sipariş durumu?' });
+    expect(JSON.parse(init.body)).toEqual(messagePayload);
   });
 
   it('does not call SAP when no route matches', async () => {

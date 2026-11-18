@@ -40,26 +40,6 @@ async function findRoute(event: SapEvent): Promise<SapRoute | undefined> {
   return rows[0];
 }
 
-export function buildSapPayload(event: SapEvent, route: Pick<SapRoute, 'tenant_name'>) {
-  return {
-    Tenant: route.tenant_name,
-    EventType: event.eventType,
-    Field: event.field,
-    WabaId: event.wabaId,
-    PhoneNumberId: event.phoneNumberId ?? '',
-    DisplayPhoneNumber: event.displayPhoneNumber ?? '',
-    From: event.from ?? '',
-    ContactName: event.contactName ?? '',
-    MessageId: event.messageId ?? '',
-    MessageType: event.messageType ?? '',
-    Text: event.text ?? '',
-    Status: event.status ?? '',
-    RecipientId: event.recipientId ?? '',
-    Timestamp: event.timestamp ?? '',
-    RawJson: JSON.stringify(event.raw),
-  };
-}
-
 async function logDispatch(event: SapEvent, route: SapRoute | undefined, status: string, detail: string) {
   try {
     await sql`
@@ -95,9 +75,10 @@ export async function dispatchEvent(event: SapEvent): Promise<void> {
   }
 
   const url = route.base_url.replace(/\/+$/, '') + '/' + path.replace(/^\/+/, '');
-  const body = buildSapPayload(event, route);
+  // Forward the webhook JSON as received from Meta (see events.ts).
+  const body = event.payload;
   sapDebug('4. dispatchEvent: target URL', { tenant: route.tenant_name, eventType: event.eventType, url });
-  sapDebug('5. dispatchEvent: payload sent to SAP', body);
+  sapDebug('5. dispatchEvent: webhook JSON sent to SAP (as received)', body);
   const startedAt = Date.now();
   try {
     const res = await callSap(loadCredentials(route.credential_key, route.auth_type), {
@@ -120,7 +101,7 @@ export async function dispatchWebhookToSap(payload: unknown): Promise<void> {
   const events = extractSapEvents(payload as Parameters<typeof extractSapEvents>[0]);
   sapDebug(
     `2. extractSapEvents: ${events.length} event(s)`,
-    events.map(({ raw: _raw, ...e }) => e),
+    events.map(({ payload: _payload, ...e }) => e),
   );
   await Promise.allSettled(events.map(dispatchEvent));
 }
