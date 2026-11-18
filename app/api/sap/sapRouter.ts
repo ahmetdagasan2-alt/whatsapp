@@ -2,8 +2,9 @@
 // WABA ID / phone number ID that the event came from.
 //
 // Lookup order for an event: exact phone_number_id route, then waba_id route.
-// Each route maps event types (message, status, call, other) to a path on the
-// tenant's SAP base URL; event types without a path are not forwarded.
+// Every webhook is forwarded: an event type (message, status, call, other) uses
+// its own path from `endpoints` if set, otherwise the route's "message" path.
+// Only routes with neither are skipped.
 
 import { sql } from '@vercel/postgres';
 
@@ -67,10 +68,10 @@ export async function dispatchEvent(event: SapEvent): Promise<void> {
     return;
   }
 
-  const path = route.endpoints?.[event.eventType];
+  const path = route.endpoints?.[event.eventType] ?? route.endpoints?.message;
   if (!path) {
-    sapDebug('4. dispatchEvent: SKIPPED, no endpoint for event type', { eventType: event.eventType, endpoints: route.endpoints });
-    await logDispatch(event, route, 'skipped', `no endpoint for ${event.eventType}`);
+    sapDebug('4. dispatchEvent: SKIPPED, no endpoint for event type or message', { eventType: event.eventType, endpoints: route.endpoints });
+    await logDispatch(event, route, 'skipped', `no endpoint for ${event.eventType} or message`);
     return;
   }
 

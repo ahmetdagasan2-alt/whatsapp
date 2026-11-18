@@ -111,8 +111,24 @@ describe('dispatchWebhookToSap', () => {
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
-  it('skips event types without an endpoint', async () => {
-    vi.mocked(sql).mockResolvedValueOnce({ rows: [{ ...route, endpoints: { status: '/StatusSet' } }] } as never).mockResolvedValue({ rows: [] } as never);
+  it('sends statuses to the message endpoint when no status endpoint is set', async () => {
+    vi.mocked(sql).mockResolvedValueOnce({ rows: [{ ...route, csrf: false }] } as never).mockResolvedValue({ rows: [] } as never);
+    mockFetch.mockResolvedValueOnce(new Response('{}', { status: 200 }));
+    const statusPayload = {
+      object: 'whatsapp_business_account',
+      entry: [{ id: '111', changes: [{ field: 'messages', value: { metadata: { phone_number_id: '222' }, statuses: [{ id: 'wamid.9', status: 'delivered' }] } }] }],
+    };
+
+    await dispatchWebhookToSap(statusPayload);
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    const [url, init] = mockFetch.mock.calls[0];
+    expect(url).toBe('https://sap.example.com/odata/ZWA_SRV/MessageSet?sap-client=100');
+    expect(JSON.parse(init.body)).toEqual(statusPayload);
+  });
+
+  it('skips only when neither the event type nor message has an endpoint', async () => {
+    vi.mocked(sql).mockResolvedValueOnce({ rows: [{ ...route, endpoints: {} }] } as never).mockResolvedValue({ rows: [] } as never);
     await dispatchWebhookToSap(messagePayload);
     expect(mockFetch).not.toHaveBeenCalled();
   });

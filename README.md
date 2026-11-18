@@ -291,7 +291,7 @@ CREATE TABLE IF NOT EXISTS sap_routes (
   base_url TEXT NOT NULL,
   auth_type VARCHAR NOT NULL DEFAULT 'basic',   -- basic | oauth2 | none
   credential_key VARCHAR NOT NULL,              -- secrets in env: SAP_<KEY>_USER, SAP_<KEY>_PASSWORD, ...
-  endpoints JSONB NOT NULL DEFAULT '{}',        -- {"message": "/path", "status": "/path", "call": ..., "other": ...}
+  endpoints JSONB NOT NULL DEFAULT '{}',        -- {"message": "/path"} is used for every event type; add "status"/"call"/"other" only to send those elsewhere
   csrf BOOLEAN NOT NULL DEFAULT TRUE,
   enabled BOOLEAN NOT NULL DEFAULT TRUE,
   last_updated TIMESTAMP,
