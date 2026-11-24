@@ -8,10 +8,12 @@
 import { useState, useEffect } from 'react';
 
 import { feGraphApiPostWrapper } from '@/app/feUtils';
+import { useT } from '@/app/i18n/client';
 import type { PhoneDetails } from '@/app/types/api';
 import { cn } from '@/lib/utils';
 
 export default function AckBotStatus({ phone }: { phone: PhoneDetails }) {
+  const t = useT();
   const [isAckBotEnabled, setIsAckBotEnabled] = useState(phone.isAckBotEnabled);
   const [isLoading, setIsLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -30,11 +32,11 @@ export default function AckBotStatus({ phone }: { phone: PhoneDetails }) {
           setAckMessage(data.ackBotMessage || '');
         } catch (err) {
           console.error('Failed to load ackbot message:', err);
-          setError('Failed to load AckBot message');
+          setError(t('Failed to load AckBot message', 'Otomatik yanıt mesajı yüklenemedi'));
         }
       })();
     }
-  }, [showModal, phone.id]);
+  }, [showModal, phone.id, t]);
 
   async function handleToggle() {
     if (isAckBotEnabled) {
@@ -49,7 +51,7 @@ export default function AckBotStatus({ phone }: { phone: PhoneDetails }) {
         setIsAckBotEnabled(false);
       } catch (err) {
         console.error('Failed to toggle AckBot:', err);
-        setError('Failed to disable AckBot');
+        setError(t('Failed to disable AckBot', 'Otomatik yanıt kapatılamadı'));
       } finally {
         setIsLoading(false);
       }
@@ -72,7 +74,7 @@ export default function AckBotStatus({ phone }: { phone: PhoneDetails }) {
       setShowModal(false);
     } catch (err) {
       console.error('Failed to save AckBot config:', err);
-      setError('Failed to save AckBot configuration');
+      setError(t('Failed to save AckBot configuration', 'Otomatik yanıt ayarları kaydedilemedi'));
     } finally {
       setIsLoading(false);
     }
@@ -94,7 +96,7 @@ export default function AckBotStatus({ phone }: { phone: PhoneDetails }) {
       setShowModal(false);
     } catch (err) {
       console.error('Failed to update AckBot message:', err);
-      setError('Failed to update message');
+      setError(t('Failed to update message', 'Mesaj güncellenemedi'));
     } finally {
       setIsLoading(false);
     }
@@ -128,11 +130,13 @@ export default function AckBotStatus({ phone }: { phone: PhoneDetails }) {
           role="button"
           tabIndex={0}
         >
-          {isLoading ? '...' : isAckBotEnabled ? 'AckBot On' : 'AckBot Off'}
+          {isLoading ? '...' : isAckBotEnabled ? t('AckBot On', 'Oto. Yanıt Açık') : t('AckBot Off', 'Oto. Yanıt Kapalı')}
         </div>
         {showTooltip && (
           <div className="absolute z-50 px-3 py-2 text-xs text-slate-700 bg-white border border-slate-200 rounded-xl shadow-lg whitespace-normal bottom-full mb-2 left-1/2 transform -translate-x-1/2 pointer-events-none">
-            {isAckBotEnabled ? 'Click to edit message, right-click to disable' : 'Click to enable AckBot'}
+            {isAckBotEnabled
+              ? t('Click to edit message, right-click to disable', 'Mesajı düzenlemek için tıklayın, kapatmak için sağ tıklayın')
+              : t('Click to enable AckBot', 'Otomatik yanıtı açmak için tıklayın')}
             <div className="absolute w-2 h-2 bg-white border-r border-b border-slate-200 transform rotate-45 -bottom-1 left-1/2 -translate-x-1/2"></div>
           </div>
         )}
@@ -158,12 +162,15 @@ export default function AckBotStatus({ phone }: { phone: PhoneDetails }) {
             </button>
 
             <h2 className="text-lg font-semibold text-gray-900 mb-1">
-              {isAckBotEnabled ? 'Edit AckBot Message' : 'Enable AckBot'}
+              {isAckBotEnabled ? t('Edit AckBot Message', 'Otomatik Yanıt Mesajını Düzenle') : t('Enable AckBot', 'Otomatik Yanıtı Aç')}
             </h2>
             <p className="text-sm text-gray-500 mb-4">
               {isAckBotEnabled
-                ? 'Update the auto-reply message for incoming messages.'
-                : 'AckBot will automatically reply to incoming messages. Set a custom message or leave empty to echo the received message.'}
+                ? t('Update the auto-reply message for incoming messages.', 'Gelen mesajlara verilecek otomatik yanıtı güncelleyin.')
+                : t(
+                    'AckBot will automatically reply to incoming messages. Set a custom message or leave empty to echo the received message.',
+                    'Gelen mesajlara otomatik yanıt verilir. Özel bir mesaj yazın veya alınan mesajı geri göndermek için boş bırakın.',
+                  )}
             </p>
 
             {error && (
@@ -172,16 +179,18 @@ export default function AckBotStatus({ phone }: { phone: PhoneDetails }) {
               </div>
             )}
 
-            <label className="block text-sm font-medium text-gray-700 mb-2">Auto-reply message</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{t('Auto-reply message', 'Otomatik yanıt mesajı')}</label>
             <textarea
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 focus:outline-none resize-none"
               rows={3}
-              placeholder='Leave empty to echo: "ack: {received message}"'
+              placeholder={t('Leave empty to echo: "ack: {received message}"', 'Boş bırakılırsa: "ack: {alınan mesaj}"')}
               value={ackMessage}
               onChange={(e) => setAckMessage(e.target.value)}
             />
             <p className="text-xs text-gray-400 mt-1 mb-4">
-              {ackMessage ? `Will reply: "${ackMessage}"` : 'Will reply: "ack: {received message}"'}
+              {ackMessage
+                ? t(`Will reply: "${ackMessage}"`, `Yanıt: "${ackMessage}"`)
+                : t('Will reply: "ack: {received message}"', 'Yanıt: "ack: {alınan mesaj}"')}
             </p>
 
             <div className="flex gap-2">
@@ -189,14 +198,14 @@ export default function AckBotStatus({ phone }: { phone: PhoneDetails }) {
                 className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium text-sm"
                 onClick={() => setShowModal(false)}
               >
-                Cancel
+                {t('Cancel', 'İptal')}
               </button>
               <button
-                className="flex-1 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium text-sm"
+                className="flex-1 px-4 py-2.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 disabled:opacity-50 font-medium text-sm"
                 onClick={isAckBotEnabled ? handleUpdateMessage : handleSave}
                 disabled={isLoading}
               >
-                {isLoading ? 'Saving...' : isAckBotEnabled ? 'Update' : 'Enable AckBot'}
+                {isLoading ? t('Saving...', 'Kaydediliyor...') : isAckBotEnabled ? t('Update', 'Güncelle') : t('Enable AckBot', 'Otomatik Yanıtı Aç')}
               </button>
             </div>
 
@@ -209,7 +218,7 @@ export default function AckBotStatus({ phone }: { phone: PhoneDetails }) {
                 }}
                 disabled={isLoading}
               >
-                Disable AckBot
+                {t('Disable AckBot', 'Otomatik Yanıtı Kapat')}
               </button>
             )}
           </div>

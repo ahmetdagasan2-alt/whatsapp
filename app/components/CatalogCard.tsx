@@ -5,13 +5,16 @@
 
 import { ExternalLink, BookOpen } from 'lucide-react';
 
+import { getT } from '@/app/i18n/server';
+
 interface CatalogCardProps {
   id: string;
   name: string;
   businessId: string;
 }
 
-export default function CatalogCard({ id, name, businessId }: CatalogCardProps) {
+export default async function CatalogCard({ id, name, businessId }: CatalogCardProps) {
+  const t = await getT();
   const catalogUrl = `https://business.facebook.com/commerce/catalogs/${id}/products?business_id=${businessId}`;
 
   return (
@@ -33,7 +36,7 @@ export default function CatalogCard({ id, name, businessId }: CatalogCardProps) 
           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-600 text-white text-xs font-medium rounded-lg hover:bg-brand-700 transition-colors"
         >
           <ExternalLink className="w-3 h-3" />
-          Kataloğu Aç
+          {t('View Catalog', 'Kataloğu Aç')}
         </a>
       </div>
     </div>

@@ -12,32 +12,34 @@ import LoggedOut from '@/app/components/LoggedOut';
 import WabaPageLayout from '@/app/components/WabaPageLayout';
 import InstagramAccountCard from '@/app/components/InstagramAccountCard';
 import publicConfig from '@/app/publicConfig';
+import { getT } from '@/app/i18n/server';
 
 export default async function MyInstagramAccounts() {
   const session = await auth0.getSession();
   if (!session) return <LoggedOut />;
 
   const userId = session.user.email;
+  const t = await getT();
   const appDetails = await getAppDetails(publicConfig.appId);
   const accounts = await getInstagramAccounts(userId);
 
   return (
     <WabaPageLayout
-      title="Instagram Hesapları"
-      description="Uygulamanıza bağlı Instagram hesapları."
+      title={t('Instagram Accounts', 'Instagram Hesapları')}
+      description={t('Instagram accounts connected to your app.', 'Uygulamanıza bağlı Instagram hesapları.')}
       userId={userId}
       logoUrl={appDetails.logo_url}
       appName={appDetails.name}
       isEmpty={accounts.length === 0}
-      emptyMessage="Henüz Instagram hesabı yok."
-      emptyDescription="Kurulum ekranından hesap bağladığınızda Instagram hesaplarınız burada görünecek."
+      emptyMessage={t('No Instagram accounts yet.', 'Henüz Instagram hesabı yok.')}
+      emptyDescription={t('Your Instagram accounts will appear here once you connect an account from the home page.', 'Ana sayfadan hesap bağladığınızda Instagram hesaplarınız burada görünecek.')}
       icon={<Instagram className="w-10 h-10" />}
     >
       {accounts.map((account: InstagramAccountWithDetails) => (
         <InstagramAccountCard
           key={account.id}
           id={account.id}
-          name={account.username || 'İsimsiz hesap'}
+          name={account.username || t('Unnamed account', 'İsimsiz hesap')}
           businessId={account.business_id || ''}
         />
       ))}

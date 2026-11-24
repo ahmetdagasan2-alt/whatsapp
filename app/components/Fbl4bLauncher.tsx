@@ -7,7 +7,9 @@
 
 import { useEffect, useRef } from 'react';
 
+import { useT } from '@/app/i18n/client';
 import type { SessionInfo } from '@/app/types/api';
+import { cn } from '@/lib/utils';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- FB SDK global has no published type declarations
 declare const FB: any;
@@ -21,6 +23,8 @@ interface FBL4BLauncherProps {
   onLastEventDataChange: (data: unknown) => void;
   onSaveToken: (code: string, sessionInfo: SessionInfo) => void;
   onQuickLaunch?: (fn: () => void) => void;
+  label?: string;
+  className?: string;
 }
 
 let sessionInfoOuter: SessionInfo | null = null;
@@ -34,7 +38,10 @@ export default function FBL4BLauncher({
   onLastEventDataChange,
   onSaveToken,
   onQuickLaunch,
+  label,
+  className,
 }: FBL4BLauncherProps) {
+  const t = useT();
   // Track whether the ES flow is in progress
   const esInProgress = useRef(false);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -73,7 +80,12 @@ export default function FBL4BLauncher({
     const blocked = onClickFbl4b();
     if (blocked) return;
     if (typeof FB === 'undefined') {
-      onBannerInfoChange('Facebook SDK is still loading. Please try again in a moment.');
+      onBannerInfoChange(
+        t(
+          'Facebook SDK is still loading. Please try again in a moment.',
+          'Facebook bağlantısı hâlâ yükleniyor. Lütfen birkaç saniye sonra tekrar deneyin.',
+        ),
+      );
       return;
     }
     const esConfigJson = JSON.parse(esConfig);
@@ -174,9 +186,12 @@ export default function FBL4BLauncher({
   return (
     <button
       onClick={launchWhatsAppSignup}
-      className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-[#1877F2] text-white text-sm font-semibold rounded-full hover:bg-[#1565C0] transition-all shadow-[0_4px_14px_rgba(24,119,242,0.4)] hover:shadow-[0_6px_20px_rgba(24,119,242,0.55)] hover:-translate-y-px"
+      className={cn(
+        'w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-[#1877F2] text-white text-sm font-semibold rounded-full hover:bg-[#1565C0] transition-all shadow-[0_4px_14px_rgba(24,119,242,0.4)] hover:shadow-[0_6px_20px_rgba(24,119,242,0.55)] hover:-translate-y-px',
+        className,
+      )}
     >
-      Launch Embedded Signup
+      {label ?? t('Launch Embedded Signup', 'Embedded Signup Başlat')}
       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path
           strokeLinecap="round"

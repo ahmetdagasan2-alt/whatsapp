@@ -8,6 +8,7 @@
 import { useState, useRef, useEffect } from 'react';
 
 import { feGraphApiPostWrapper } from '@/app/feUtils';
+import { useT } from '@/app/i18n/client';
 import { cn } from '@/lib/utils';
 
 interface PhoneRegistrationModalProps {
@@ -29,6 +30,7 @@ export default function PhoneRegistrationModal({
   onClose,
   onRegistrationComplete,
 }: PhoneRegistrationModalProps) {
+  const t = useT();
   const [step, setStep] = useState<Step>(() => {
     if (phone.status === 'CONNECTED') return 'done';
     if (phone.code_verification_status === 'VERIFIED') return 'register';
@@ -57,11 +59,11 @@ export default function PhoneRegistrationModal({
       setOtpExpiry(next);
       if (next === 0) {
         setOtpExpired(true);
-        setError('Code expired. Please request a new one.');
+        setError(t('Code expired. Please request a new one.', 'Kodun süresi doldu. Lütfen yeni bir kod isteyin.'));
       }
     }, 1000);
     return () => clearTimeout(timer);
-  }, [otpExpiry]);
+  }, [otpExpiry, t]);
 
   // Auto-submit only when all 6 slots contain a valid digit (0-9)
   const allDigitsFilled = digits.every((d) => /^\d$/.test(d));
@@ -102,7 +104,7 @@ export default function PhoneRegistrationModal({
       setOtpExpiry(600);
       setOtpExpired(false);
     } catch {
-      setError('Failed to request verification code. Please try again.');
+      setError(t('Failed to request verification code. Please try again.', 'Doğrulama kodu istenemedi. Lütfen tekrar deneyin.'));
     } finally {
       setIsLoading(false);
     }
@@ -125,11 +127,11 @@ export default function PhoneRegistrationModal({
       setAttempts((prev) => prev - 1);
       const errMsg = (err as { message?: string; code?: string })?.message ?? (err as { code?: string })?.code ?? '';
       if (/expired/i.test(errMsg)) {
-        setError('Your code has expired. Please request a new one.');
+        setError(t('Your code has expired. Please request a new one.', 'Kodunuzun süresi doldu. Lütfen yeni bir kod isteyin.'));
       } else if (/rate|limit/i.test(errMsg)) {
-        setError('Too many requests. Please wait a moment and try again.');
+        setError(t('Too many requests. Please wait a moment and try again.', 'Çok fazla istek gönderildi. Lütfen biraz bekleyip tekrar deneyin.'));
       } else {
-        setError('Invalid code. Please check and try again.');
+        setError(t('Invalid code. Please check and try again.', 'Kod geçersiz. Lütfen kontrol edip tekrar deneyin.'));
       }
       setDigits(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
@@ -151,11 +153,11 @@ export default function PhoneRegistrationModal({
     } catch (err: unknown) {
       const errMsg = (err as { message?: string; code?: string })?.message ?? (err as { code?: string })?.code ?? '';
       if (/expired/i.test(errMsg)) {
-        setError('Your code has expired. Please request a new one.');
+        setError(t('Your code has expired. Please request a new one.', 'Kodunuzun süresi doldu. Lütfen yeni bir kod isteyin.'));
       } else if (/rate|limit/i.test(errMsg)) {
-        setError('Too many requests. Please wait a moment and try again.');
+        setError(t('Too many requests. Please wait a moment and try again.', 'Çok fazla istek gönderildi. Lütfen biraz bekleyip tekrar deneyin.'));
       } else {
-        setError('Failed to register phone. Please try again.');
+        setError(t('Failed to register phone. Please try again.', 'Numara kaydedilemedi. Lütfen tekrar deneyin.'));
       }
     } finally {
       setIsLoading(false);
@@ -176,43 +178,48 @@ export default function PhoneRegistrationModal({
 
         {step === 'request' && (
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900">Verify your phone number</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('Verify your phone number', 'Telefon numaranızı doğrulayın')}</h2>
             <p className="text-sm text-gray-600">
-              We&apos;ll send a verification code to {phone.display_phone_number}. It may take a few moments to arrive.
+              {t(
+                `We'll send a verification code to ${phone.display_phone_number}. It may take a few moments to arrive.`,
+                `${phone.display_phone_number} numarasına bir doğrulama kodu göndereceğiz. Kodun ulaşması birkaç dakika sürebilir.`,
+              )}
             </p>
             <button
               className="w-full px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
               onClick={handleRequestCode}
               disabled={isLoading}
             >
-              {isLoading ? 'Sending...' : 'Send verification code'}
+              {isLoading ? t('Sending...', 'Gönderiliyor...') : t('Send verification code', 'Doğrulama kodu gönder')}
             </button>
           </div>
         )}
 
         {step === 'verify' && (
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900">Verify your phone number</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('Verify your phone number', 'Telefon numaranızı doğrulayın')}</h2>
             <p className="text-sm text-gray-600">
-              We sent a verification code to {phone.display_phone_number}. It may take a few moments to arrive. To
-              verify your number, enter the 6-digit code.
+              {t(
+                `We sent a verification code to ${phone.display_phone_number}. It may take a few moments to arrive. To verify your number, enter the 6-digit code.`,
+                `${phone.display_phone_number} numarasına bir doğrulama kodu gönderdik. Kodun ulaşması birkaç dakika sürebilir. Numaranızı doğrulamak için 6 haneli kodu girin.`,
+              )}
             </p>
 
             {otpExpired ? (
               <div className="text-center space-y-3 py-2">
-                <p className="text-sm text-red-600 font-medium">Code expired</p>
+                <p className="text-sm text-red-600 font-medium">{t('Code expired', 'Kodun süresi doldu')}</p>
                 <button
                   className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
                   onClick={handleRequestCode}
                   disabled={isLoading}
                 >
-                  {isLoading ? 'Sending...' : 'Resend code'}
+                  {isLoading ? t('Sending...', 'Gönderiliyor...') : t('Resend code', 'Kodu tekrar gönder')}
                 </button>
               </div>
             ) : (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Verification code</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{t('Verification code', 'Doğrulama kodu')}</label>
                   <div className="flex gap-2 justify-center">
                     {digits.map((digit, i) => (
                       <input
@@ -239,17 +246,20 @@ export default function PhoneRegistrationModal({
                     onClick={handleRequestCode}
                     disabled={resendTimer > 0 || isLoading}
                   >
-                    Resend code {resendTimer > 0 ? `(0:${resendTimer.toString().padStart(2, '0')})` : ''}
+                    {t('Resend code', 'Kodu tekrar gönder')}{' '}
+                    {resendTimer > 0 ? `(0:${resendTimer.toString().padStart(2, '0')})` : ''}
                   </button>
                   <span className="text-gray-500">
-                    Code expires in {Math.floor(otpExpiry / 60)}:{(otpExpiry % 60).toString().padStart(2, '0')}
+                    {t('Code expires in', 'Kalan süre:')} {Math.floor(otpExpiry / 60)}:{(otpExpiry % 60).toString().padStart(2, '0')}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">{attempts}/6 attempts left</span>
+                  <span className="text-gray-500">{t(`${attempts}/6 attempts left`, `${attempts}/6 deneme hakkı kaldı`)}</span>
                   {attempts === 0 && (
-                    <span className="text-red-600">Too many attempts. Please request a new code.</span>
+                    <span className="text-red-600">
+                      {t('Too many attempts. Please request a new code.', 'Çok fazla deneme yapıldı. Lütfen yeni kod isteyin.')}
+                    </span>
                   )}
                 </div>
 
@@ -258,7 +268,7 @@ export default function PhoneRegistrationModal({
                   onClick={handleVerifyCode}
                   disabled={isLoading || digits.some((d) => !d) || attempts === 0}
                 >
-                  {isLoading ? 'Verifying...' : 'Next'}
+                  {isLoading ? t('Verifying...', 'Doğrulanıyor...') : t('Next', 'İleri')}
                 </button>
               </>
             )}
@@ -267,16 +277,19 @@ export default function PhoneRegistrationModal({
 
         {step === 'register' && (
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold text-gray-900">Complete registration</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('Complete registration', 'Kaydı tamamlayın')}</h2>
             <p className="text-sm text-gray-600">
-              Your phone number has been verified. Click below to complete the registration.
+              {t(
+                'Your phone number has been verified. Click below to complete the registration.',
+                'Telefon numaranız doğrulandı. Kaydı tamamlamak için aşağıdaki butona tıklayın.',
+              )}
             </p>
             <button
               className="w-full px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 font-medium"
               onClick={handleRegister}
               disabled={isLoading}
             >
-              {isLoading ? 'Registering...' : 'Register'}
+              {isLoading ? t('Registering...', 'Kaydediliyor...') : t('Register', 'Kaydet')}
             </button>
           </div>
         )}
@@ -288,12 +301,12 @@ export default function PhoneRegistrationModal({
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <p className="text-sm text-gray-600 font-medium">Phone number registered successfully!</p>
+            <p className="text-sm text-gray-600 font-medium">{t('Phone number registered successfully!', 'Telefon numarası başarıyla kaydedildi!')}</p>
             <button
               className="w-full px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium"
               onClick={onClose}
             >
-              Close
+              {t('Close', 'Kapat')}
             </button>
           </div>
         )}

@@ -8,6 +8,7 @@
 import { useState, useEffect, useRef } from 'react';
 
 import { Phone, PhoneOff, PhoneOutgoing, Mic, MicOff, Loader2 } from 'lucide-react';
+import { useT } from '@/app/i18n/client';
 import type { ActiveCallState } from '@/app/types/calling';
 import type { CallingClient } from '@/app/components/CallingClient';
 import { cn } from '@/lib/utils';
@@ -56,6 +57,7 @@ export default function CallBanner({
   onHangUp,
   onRetry,
 }: CallBannerProps) {
+  const t = useT();
   const [isMuted, setIsMuted] = useState(false);
   const [duration, setDuration] = useState(0);
   const [visible, setVisible] = useState(true);
@@ -158,35 +160,36 @@ export default function CallBanner({
         <div>
           {callState.state === 'RINGING' && isInbound && (
             <span className="text-sm font-medium text-green-800">
-              Incoming call from {callState.callerName ?? callState.callerNumber ?? 'unknown'}
+              {t('Incoming call from', 'Gelen arama:')}{' '}
+              {callState.callerName ?? callState.callerNumber ?? t('unknown', 'bilinmeyen')}
             </span>
           )}
           {callState.state === 'CONNECTING' && isOutbound && (
             <span className="text-sm font-medium text-blue-800 flex items-center gap-2">
               <Loader2 className="w-3 h-3 animate-spin" />
-              Calling {callState.destPhone}...
+              {t(`Calling ${callState.destPhone}...`, `${callState.destPhone} aranıyor...`)}
             </span>
           )}
           {callState.state === 'RINGING' && isOutbound && (
             <span className="text-sm font-medium text-blue-800 flex items-center gap-2">
               <Loader2 className="w-3 h-3 animate-spin" />
-              Ringing {callState.destPhone}...
+              {t(`Ringing ${callState.destPhone}...`, `${callState.destPhone} çalıyor...`)}
             </span>
           )}
           {callState.state === 'CONNECTING' && isInbound && (
             <span className="text-sm font-medium text-blue-800 flex items-center gap-2">
               <Loader2 className="w-3 h-3 animate-spin" />
-              Connecting...
+              {t('Connecting...', 'Bağlanıyor...')}
             </span>
           )}
           {callState.state === 'ACTIVE' && (
             <span className="text-sm font-medium text-emerald-800">
-              On call &middot; {formatDuration(duration)}
+              {t('On call', 'Görüşmede')} &middot; {formatDuration(duration)}
             </span>
           )}
           {callState.state === 'ENDED' && (
             <span className="text-sm text-gray-500">
-              Call ended
+              {t('Call ended', 'Arama sona erdi')}
               {callState.error && ` — ${callState.error}`}
             </span>
           )}
@@ -201,14 +204,14 @@ export default function CallBanner({
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-green-600 text-white hover:bg-green-700 transition-colors"
             >
               <Phone className="w-3 h-3" />
-              Accept
+              {t('Accept', 'Kabul Et')}
             </button>
             <button
               onClick={onReject}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-red-600 text-white hover:bg-red-700 transition-colors"
             >
               <PhoneOff className="w-3 h-3" />
-              Reject
+              {t('Reject', 'Reddet')}
             </button>
           </>
         )}
@@ -219,7 +222,7 @@ export default function CallBanner({
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-red-600 text-white hover:bg-red-700 transition-colors"
           >
             <PhoneOff className="w-3 h-3" />
-            Cancel
+            {t('Cancel', 'İptal')}
           </button>
         )}
 
@@ -235,14 +238,14 @@ export default function CallBanner({
               )}
             >
               {isMuted ? <MicOff className="w-3 h-3" /> : <Mic className="w-3 h-3" />}
-              {isMuted ? 'Unmute' : 'Mute'}
+              {isMuted ? t('Unmute', 'Sesi Aç') : t('Mute', 'Sessize Al')}
             </button>
             <button
               onClick={onHangUp}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-red-600 text-white hover:bg-red-700 transition-colors"
             >
               <PhoneOff className="w-3 h-3" />
-              Hang up
+              {t('Hang up', 'Kapat')}
             </button>
           </>
         )}
@@ -253,7 +256,7 @@ export default function CallBanner({
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
           >
             <Phone className="w-3 h-3" />
-            Retry call
+            {t('Retry call', 'Tekrar Ara')}
           </button>
         )}
       </div>

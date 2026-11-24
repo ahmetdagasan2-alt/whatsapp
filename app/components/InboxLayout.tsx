@@ -16,6 +16,7 @@ import PhoneRegistrationModal from '@/app/components/PhoneRegistrationModal';
 import PhoneStatus from '@/app/components/PhoneStatus';
 import AckBotStatus from '@/app/components/AckBotStatus';
 import CallingStatus from '@/app/components/CallingStatus';
+import { useLocale, useT } from '@/app/i18n/client';
 import type { PhoneDetails } from '@/app/types/api';
 import { CallingClient } from '@/app/components/CallingClient';
 import CallBanner, { stopRinging } from '@/app/components/CallBanner';
@@ -32,6 +33,15 @@ type ChatMeta = {
 type ChannelTab = 'whatsapp' | 'messenger' | 'instagram';
 
 export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
+  const t = useT();
+  const locale = useLocale();
+  // Callbacks registered once (Ably, CallingClient) read the latest translator from these refs.
+  const tRef = useRef(t);
+  const localeRef = useRef(locale);
+  useEffect(() => {
+    tRef.current = t;
+    localeRef.current = locale;
+  }, [t, locale]);
   const [selectedPhone, setSelectedPhone] = useState<PhoneDetails | null>(phones[0] ?? null);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [activeChannel, setActiveChannel] = useState<ChannelTab>('whatsapp');
@@ -176,7 +186,7 @@ export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
           return;
         }
         const permStatus = data.permission?.status;
-        const remaining = formatRemainingRequests(data.actions ?? []);
+        const remaining = formatRemainingRequests(data.actions ?? [], localeRef.current);
         if (permStatus === 'permanent') {
           setPermissionMap(prev => { const next = { ...prev }; delete next[selectedChatId]; return next; });
         } else if (permStatus === 'temporary') {
@@ -228,7 +238,7 @@ export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
         ...(meta?.direction ? { direction: meta.direction } : {}),
         ...(meta?.destPhone ? { destPhone: meta.destPhone } : {}),
         ...(meta?.callId ? { callId: meta.callId } : {}),
-        ...(meta?.endReason === 'failed' ? { error: 'Connection failed' } : {}),
+        ...(meta?.endReason === 'failed' ? { error: tRef.current('Connection failed', 'Bağlantı başarısız') } : {}),
       }));
 
       // Reset to IDLE after ENDED so the next call can come through
@@ -329,7 +339,7 @@ export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
         console.error('Failed to send message:', error);
         addMessage(phone.id, chatId, {
           type: 'text',
-          text: 'Failed to send message',
+          text: tRef.current('Failed to send message', 'Mesaj gönderilemedi'),
           direction: 'outgoing',
           timestamp: Date.now(),
         });
@@ -371,7 +381,7 @@ export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
       setCallState(prev => ({
         ...prev,
         state: 'ENDED',
-        error: err instanceof Error ? err.message : 'Failed to accept call',
+        error: err instanceof Error ? err.message : tRef.current('Failed to accept call', 'Arama kabul edilemedi'),
       }));
     }
   }, []);
@@ -422,7 +432,7 @@ export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
       setCallState(prev => ({
         ...prev,
         state: 'ENDED',
-        error: err instanceof Error ? err.message : 'Failed to start call',
+        error: err instanceof Error ? err.message : tRef.current('Failed to start call', 'Arama başlatılamadı'),
       }));
     }
   }, []);
@@ -453,7 +463,7 @@ export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
       // Response shape: { permission: { status: "permanent"|"temporary"|... }, actions: [...] }
       const permStatus = data.permission?.status;
       const hasPermission = permStatus === 'permanent' || permStatus === 'temporary';
-      const remaining = formatRemainingRequests(data.actions ?? []);
+      const remaining = formatRemainingRequests(data.actions ?? [], localeRef.current);
 
       if (hasPermission) {
         // Permission granted — start call immediately
@@ -632,7 +642,7 @@ export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
                   setAllChats(prev => {
                     if (prev[phoneId]?.[call.from]) return prev;
                     const phoneChats = prev[phoneId] ?? {};
-                    return { ...prev, [phoneId]: { ...phoneChats, [call.from]: { displayName: callerName ?? call.from, lastMessage: 'Missed call', lastTimestamp: Date.now() } } };
+                    return { ...prev, [phoneId]: { ...phoneChats, [call.from]: { displayName: callerName ?? call.from, lastMessage: tRef.current('Missed call', 'Cevapsız arama'), lastTimestamp: Date.now() } } };
                   });
                 } else {
                   console.warn('[Calling] Ignoring connect webhook: state=', currentState,
@@ -741,7 +751,7 @@ export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
                       .then(r => r.json())
                       .then(data => {
                         const permStatus = data.permission?.status;
-                        const remaining = formatRemainingRequests(data.actions ?? []);
+                        const remaining = formatRemainingRequests(data.actions ?? [], localeRef.current);
                         if (permStatus === 'permanent') {
                           setPermissionMap(prev => ({ ...prev, [replyFrom]: { state: 'granted', remainingRequests: remaining } }));
                         } else if (permStatus === 'temporary') {
@@ -838,7 +848,7 @@ export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
             Messenger
           </button>
           <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1.5 text-[11px] text-slate-700 bg-white border border-slate-200 rounded-lg shadow-md whitespace-normal opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-            Coming soon
+            {t('Coming soon', 'Yakında')}
           </span>
         </div>
 
@@ -854,7 +864,7 @@ export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
             Instagram
           </button>
           <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 px-3 py-1.5 text-[11px] text-slate-700 bg-white border border-slate-200 rounded-lg shadow-md whitespace-normal opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-            Coming soon
+            {t('Coming soon', 'Yakında')}
           </span>
         </div>
       </div>
@@ -881,14 +891,14 @@ export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
                   <div>
                     <div className="text-sm font-semibold text-gray-900">{selectedPhone.display_phone_number}</div>
                     <div className="flex items-center gap-1.5 mt-0.5">
-                      <span className="text-xs text-gray-400">WhatsApp Business Account</span>
+                      <span className="text-xs text-gray-400">{t('WhatsApp Business Account', 'WhatsApp İşletme Hesabı')}</span>
                       <span
                         className={cn(
                           'text-[10px] px-1.5 py-0.5 rounded font-semibold',
                           selectedPhone.is_on_biz_app ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700',
                         )}
                       >
-                        {selectedPhone.is_on_biz_app ? 'SMB' : 'ENTERPRISE'}
+                        {selectedPhone.is_on_biz_app ? t('SMB', 'KOBİ') : t('ENTERPRISE', 'KURUMSAL')}
                       </span>
                     </div>
                   </div>
@@ -932,14 +942,20 @@ export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
                   )}
                 />
                 {ablyState === 'failed'
-                  ? 'Connection failed — please refresh'
+                  ? t('Connection failed — please refresh', 'Bağlantı kurulamadı — lütfen sayfayı yenileyin')
                   : ablyState === 'disconnected'
-                    ? 'Reconnecting…'
+                    ? t('Reconnecting…', 'Yeniden bağlanılıyor…')
                     : ablyState !== 'connected'
-                      ? 'Connecting…'
+                      ? t('Connecting…', 'Bağlanılıyor…')
                       : phoneStatuses[selectedPhone.id] === 'CONNECTED'
-                        ? `Listening for incoming messages on ${selectedPhone.display_phone_number}`
-                        : 'Phone disconnected — click status to reconnect'}
+                        ? t(
+                            `Listening for incoming messages on ${selectedPhone.display_phone_number}`,
+                            `${selectedPhone.display_phone_number} numarasına gelen mesajlar dinleniyor`,
+                          )
+                        : t(
+                            'Phone disconnected — click status to reconnect',
+                            'Numara bağlı değil — yeniden bağlamak için durum etiketine tıklayın',
+                          )}
               </div>
 
               {/* Call banner — shown only for active calls (permission UI moved to inline ribbon) */}
@@ -960,7 +976,7 @@ export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
                 {selectedPhone && Object.keys(allChats[selectedPhone.id] ?? {}).length > 0 && (
                   <div className="w-60 border-r border-gray-100 bg-white overflow-y-auto flex-shrink-0">
                     <div className="px-4 py-2.5 border-b border-gray-50">
-                      <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Conversations</h3>
+                      <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('Conversations', 'Konuşmalar')}</h3>
                     </div>
                     {Object.entries(allChats[selectedPhone.id] ?? {})
                       .sort(([, a], [, b]) => (b.lastTimestamp ?? 0) - (a.lastTimestamp ?? 0))
@@ -1064,10 +1080,15 @@ export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
                           />
                         </svg>
                       </div>
-                      <h3 className="text-sm font-semibold text-gray-700 mb-1">No Messages Yet</h3>
-                      <p className="text-xs text-gray-400 max-w-xs">Messages appear here in real-time via webhooks.</p>
+                      <h3 className="text-sm font-semibold text-gray-700 mb-1">{t('No Messages Yet', 'Henüz mesaj yok')}</h3>
+                      <p className="text-xs text-gray-400 max-w-xs">
+                        {t('Messages appear here in real-time via webhooks.', 'Yeni mesajlar geldikçe burada anında görünür.')}
+                      </p>
                       <p className="text-[11px] text-gray-300 mt-1">
-                        Conversation history is not persisted — refreshing the page will clear messages.
+                        {t(
+                          'Conversation history is not persisted — refreshing the page will clear messages.',
+                          'Konuşma geçmişi saklanmaz — sayfayı yenilediğinizde mesajlar temizlenir.',
+                        )}
                       </p>
                     </div>
                   )}
@@ -1088,8 +1109,8 @@ export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
                   />
                 </svg>
               </div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-1">No Phone Selected</h3>
-              <p className="text-xs text-gray-400">Choose a phone number from the left panel</p>
+              <h3 className="text-sm font-semibold text-gray-700 mb-1">{t('No Phone Selected', 'Numara seçilmedi')}</h3>
+              <p className="text-xs text-gray-400">{t('Choose a phone number from the left panel', 'Soldaki listeden bir telefon numarası seçin')}</p>
             </div>
           )}
         </div>

@@ -7,11 +7,14 @@
 
 import { useState } from 'react';
 
+import { useT } from '@/app/i18n/client';
+
 interface SendMessageProps {
   sendHandler: (message: string) => void;
 }
 
 export default function SendMessage({ sendHandler }: SendMessageProps) {
+  const t = useT();
   const [currentMessageText, setCurrentMessageText] = useState('');
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
@@ -32,7 +35,7 @@ export default function SendMessage({ sendHandler }: SendMessageProps) {
     <div className="flex items-center space-x-2">
       <input
         value={currentMessageText}
-        placeholder="Type your message here..."
+        placeholder={t('Type your message here...', 'Mesajınızı yazın...')}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm transition duration-200 ease-in-out focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:border-gray-400"
@@ -47,7 +50,7 @@ export default function SendMessage({ sendHandler }: SendMessageProps) {
         className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200 ease-in-out disabled:opacity-50 disabled:cursor-not-allowed"
         disabled={!currentMessageText.trim()}
       >
-        Send
+        {t('Send', 'Gönder')}
       </button>
     </div>
   );

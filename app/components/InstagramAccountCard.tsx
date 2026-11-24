@@ -5,13 +5,16 @@
 
 import { ExternalLink, Instagram } from 'lucide-react';
 
+import { getT } from '@/app/i18n/server';
+
 interface InstagramAccountCardProps {
   id: string;
   name: string;
   businessId: string;
 }
 
-export default function InstagramAccountCard({ id, name }: InstagramAccountCardProps) {
+export default async function InstagramAccountCard({ id, name }: InstagramAccountCardProps) {
+  const t = await getT();
   const igUrl = `https://www.instagram.com/${name}/`;
 
   return (
@@ -33,7 +36,7 @@ export default function InstagramAccountCard({ id, name }: InstagramAccountCardP
           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-pink-500 to-purple-600 text-white text-xs font-medium rounded-lg hover:from-pink-600 hover:to-purple-700 transition-all"
         >
           <ExternalLink className="w-3 h-3" />
-          Profili Aç
+          {t('View Profile', 'Profili Aç')}
         </a>
       </div>
     </div>

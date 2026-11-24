@@ -8,6 +8,7 @@
 import { useState, useEffect } from 'react';
 
 import { Loader2, ShieldCheck, ShieldX, PhoneOutgoing, Clock } from 'lucide-react';
+import { useLocale, useT } from '@/app/i18n/client';
 import type { PermissionState } from '@/app/types/calling';
 import { cn } from '@/lib/utils';
 import { formatTimeRemaining } from '@/app/utils/calling';
@@ -25,19 +26,22 @@ export default function CallPermissionRibbon({
   remainingRequests,
   onRequestPermission,
 }: CallPermissionRibbonProps) {
+  const t = useT();
+  const locale = useLocale();
   const [timeRemaining, setTimeRemaining] = useState(
-    expirationTime ? formatTimeRemaining(expirationTime) : '',
+    expirationTime ? formatTimeRemaining(expirationTime, locale) : '',
   );
+  const expiredLabel = formatTimeRemaining(0, locale);
 
   // Live countdown for temporary permissions
   useEffect(() => {
     if (!expirationTime) return undefined;
-    setTimeRemaining(formatTimeRemaining(expirationTime));
+    setTimeRemaining(formatTimeRemaining(expirationTime, locale));
     const interval = setInterval(() => {
-      setTimeRemaining(formatTimeRemaining(expirationTime));
+      setTimeRemaining(formatTimeRemaining(expirationTime, locale));
     }, 30000);
     return () => clearInterval(interval);
-  }, [expirationTime]);
+  }, [expirationTime, locale]);
 
   if (permissionState === 'none') return null;
 
@@ -58,14 +62,14 @@ export default function CallPermissionRibbon({
         {permissionState === 'checking' && (
           <>
             <Loader2 className="w-3.5 h-3.5 text-blue-600 animate-spin" />
-            <span className="font-medium text-blue-800">Checking call permissions...</span>
+            <span className="font-medium text-blue-800">{t('Checking call permissions...', 'Arama izinleri kontrol ediliyor...')}</span>
           </>
         )}
         {permissionState === 'requesting' && (
           <>
             <PhoneOutgoing className="w-3.5 h-3.5 text-amber-600" />
             <span className="font-medium text-amber-800">
-              Call permission required
+              {t('Call permission required', 'Arama izni gerekli')}
               {remainingRequests && (
                 <span className="font-normal text-amber-600 ml-1">· {remainingRequests}</span>
               )}
@@ -76,7 +80,7 @@ export default function CallPermissionRibbon({
           <>
             <Loader2 className="w-3.5 h-3.5 text-blue-600 animate-spin" />
             <span className="font-medium text-blue-800">
-              Permission request sent — waiting for response
+              {t('Permission request sent — waiting for response', 'İzin isteği gönderildi — yanıt bekleniyor')}
               {remainingRequests && (
                 <span className="font-normal text-blue-600 ml-1">· {remainingRequests}</span>
               )}
@@ -87,11 +91,11 @@ export default function CallPermissionRibbon({
           <>
             <ShieldCheck className="w-3.5 h-3.5 text-green-600" />
             <span className="font-medium text-green-800">
-              Permission granted
-              {expirationTime && timeRemaining !== 'expired' && (
+              {t('Permission granted', 'İzin verildi')}
+              {expirationTime && timeRemaining !== expiredLabel && (
                 <span className="inline-flex items-center gap-1 ml-2 text-green-600 font-normal">
                   <Clock className="w-3 h-3" />
-                  expires in {timeRemaining}
+                  {t(`expires in ${timeRemaining}`, `${timeRemaining} sonra sona erecek`)}
                 </span>
               )}
             </span>
@@ -100,13 +104,18 @@ export default function CallPermissionRibbon({
         {permissionState === 'denied' && (
           <>
             <ShieldX className="w-3.5 h-3.5 text-red-500" />
-            <span className="font-medium text-red-600">Permission declined</span>
+            <span className="font-medium text-red-600">{t('Permission declined', 'İzin reddedildi')}</span>
           </>
         )}
         {permissionState === 'rate_limited' && (
           <>
             <ShieldX className="w-3.5 h-3.5 text-orange-600" />
-            <span className="font-medium text-orange-700">Call permission request limit reached — try again later</span>
+            <span className="font-medium text-orange-700">
+              {t(
+                'Call permission request limit reached — try again later',
+                'Arama izni isteği sınırına ulaşıldı — daha sonra tekrar deneyin',
+              )}
+            </span>
           </>
         )}
       </div>
@@ -116,7 +125,7 @@ export default function CallPermissionRibbon({
           onClick={onRequestPermission}
           className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-600 text-white hover:bg-amber-700 transition-colors flex-shrink-0"
         >
-          {permissionState === 'denied' ? 'Request Again' : 'Request Permission'}
+          {permissionState === 'denied' ? t('Request Again', 'Tekrar İste') : t('Request Permission', 'İzin İste')}
         </button>
       )}
     </div>

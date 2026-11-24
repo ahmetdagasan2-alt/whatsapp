@@ -4,6 +4,7 @@
 // LICENSE file in the root directory of this source tree.
 
 'use client';
+import { useT } from '@/app/i18n/client';
 import type { PhoneDetails } from '@/app/types/api';
 import { cn } from '@/lib/utils';
 
@@ -14,12 +15,13 @@ interface PhoneListSidebarProps {
 }
 
 export default function PhoneListSidebar({ phones, selectedPhoneId, onSelectPhone }: PhoneListSidebarProps) {
+  const t = useT();
   return (
     <div className="w-72 bg-white border-r border-gray-100 flex flex-col h-full flex-shrink-0">
       {/* Header */}
       <div className="px-4 py-3.5 border-b border-gray-100">
-        <h2 className="text-sm font-semibold text-gray-900">My Phone Numbers</h2>
-        <p className="text-xs text-gray-400 mt-0.5">Select a number to view messages</p>
+        <h2 className="text-sm font-semibold text-gray-900">{t('My Phone Numbers', 'Telefon Numaralarım')}</h2>
+        <p className="text-xs text-gray-400 mt-0.5">{t('Select a number to view messages', 'Mesajları görmek için bir numara seçin')}</p>
       </div>
       {/* Phone List */}
       <div className="flex-1 overflow-y-auto">
@@ -35,8 +37,10 @@ export default function PhoneListSidebar({ phones, selectedPhoneId, onSelectPhon
                 />
               </svg>
             </div>
-            <p className="text-sm text-gray-500 font-medium">No phone numbers</p>
-            <p className="text-xs text-gray-400 mt-1">Connect a WABA to see numbers here</p>
+            <p className="text-sm text-gray-500 font-medium">{t('No phone numbers', 'Telefon numarası yok')}</p>
+            <p className="text-xs text-gray-400 mt-1">
+              {t('Connect a WABA to see numbers here', 'Numaraları görmek için ana sayfadan WhatsApp hesabınızı bağlayın')}
+            </p>
           </div>
         )}
         {phones.map((phone) => {
@@ -71,7 +75,7 @@ export default function PhoneListSidebar({ phones, selectedPhoneId, onSelectPhon
                       isSMB ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700',
                     )}
                   >
-                    {isSMB ? 'SMB' : 'ENT'}
+                    {isSMB ? t('SMB', 'KOBİ') : t('ENT', 'KURUMSAL')}
                   </span>
                 </div>
               </div>

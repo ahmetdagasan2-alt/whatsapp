@@ -14,6 +14,8 @@ import '@/app/globals.css';
 import ErrorBoundary from '@/app/components/ErrorBoundary';
 import MissingEnvVars from '@/app/components/MissingEnvVars';
 import { getMissingEnvVars, type MissingEnvVarInfo } from '@/app/envChecker';
+import { LocaleProvider } from '@/app/i18n/client';
+import { getLocale } from '@/app/i18n/server';
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ['latin', 'latin-ext'],
@@ -34,7 +36,7 @@ export const metadata: Metadata = {
   description: 'Dekatre Danışmanlık WhatsApp Business API yönetim paneli.',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -45,7 +47,7 @@ export default function RootLayout({
   // If there are missing environment variables, show the error page
   if (missingEnvVars.length > 0) {
     return (
-      <html lang="tr">
+      <html lang="en">
         <body className={`${plusJakartaSans.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
           <MissingEnvVars missingVars={missingEnvVars} />
         </body>
@@ -53,12 +55,19 @@ export default function RootLayout({
     );
   }
 
+  const locale = await getLocale();
+
   return (
-    <html lang="tr">
-      <Script src="https://connect.facebook.net/en_US/sdk.js" strategy="afterInteractive" />
+    <html lang={locale}>
+      <Script
+        src={`https://connect.facebook.net/${locale === 'tr' ? 'tr_TR' : 'en_US'}/sdk.js`}
+        strategy="afterInteractive"
+      />
 
       <body className={`${plusJakartaSans.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
-        <ErrorBoundary>{children}</ErrorBoundary>
+        <LocaleProvider locale={locale}>
+          <ErrorBoundary>{children}</ErrorBoundary>
+        </LocaleProvider>
         <SpeedInsights />
         <Analytics />
       </body>

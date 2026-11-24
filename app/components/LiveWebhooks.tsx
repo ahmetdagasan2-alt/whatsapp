@@ -10,6 +10,7 @@ import { useState, useEffect } from 'react';
 import Ably from 'ably';
 import { Radio, Clock, CheckCircle2, ChevronDown, ChevronUp, Wifi } from 'lucide-react';
 
+import { useT } from '@/app/i18n/client';
 import { cn } from '@/lib/utils';
 
 interface WebhookEntry {
@@ -34,6 +35,7 @@ function formatTimestamp(date: Date): string {
 }
 
 function WebhookRow({ webhook, index }: { webhook: WebhookEntry; index: number }) {
+  const t = useT();
   const [expanded, setExpanded] = useState(index === 0);
   const fieldLabel = webhook.field.charAt(0).toUpperCase() + webhook.field.slice(1);
 
@@ -71,7 +73,7 @@ function WebhookRow({ webhook, index }: { webhook: WebhookEntry; index: number }
       </button>
       {expanded && (
         <div className="border-t border-gray-100 px-5 py-4">
-          <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">Payload</div>
+          <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">{t('Payload', 'İçerik')}</div>
           <div className="bg-gray-50 rounded-lg border border-gray-200 overflow-auto max-h-64">
             <pre className="text-[11px] font-mono text-gray-700 p-4 whitespace-pre leading-relaxed">
               {JSON.stringify(webhook.payload, null, 2)}
@@ -84,6 +86,7 @@ function WebhookRow({ webhook, index }: { webhook: WebhookEntry; index: number }
 }
 
 export default function LiveWebhooks({ appId }: { appId: string }) {
+  const t = useT();
   const [webhooks, setWebhooks] = useState<WebhookEntry[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const [connected, setConnected] = useState(false);
@@ -134,29 +137,34 @@ export default function LiveWebhooks({ appId }: { appId: string }) {
         )}
       >
         <span className={cn('w-1.5 h-1.5 rounded-full animate-pulse', connected ? 'bg-emerald-500' : 'bg-amber-500')} />
-        {connected ? 'Connected — listening for events' : 'Connecting...'}
+        {connected
+          ? t('Connected — listening for events', 'Bağlı — olaylar dinleniyor')
+          : t('Connecting...', 'Bağlanıyor...')}
         <Wifi className="w-3 h-3" />
       </div>
 
       {webhooks.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-xl p-12 text-center shadow-sm">
           <Radio className="w-10 h-10 text-gray-200 mx-auto mb-3" />
-          <p className="text-sm font-medium text-gray-500">No webhook events yet</p>
+          <p className="text-sm font-medium text-gray-500">{t('No webhook events yet', 'Henüz webhook olayı yok')}</p>
           <p className="text-xs text-gray-400 mt-1 max-w-xs mx-auto">
-            Events will appear here in real time as they are received by your app.
+            {t(
+              'Events will appear here in real time as they are received by your app.',
+              'Uygulamanıza gelen olaylar burada anında görünecek.',
+            )}
           </p>
           <p className="text-[10px] text-gray-300 mt-3 max-w-md mx-auto">
-            Go to{' '}
+            {t('Go to', 'Meta tarafında')}{' '}
             <a
               href={`https://developers.facebook.com/apps/${appId}/whatsapp-business/wa-settings/`}
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-gray-400 transition-colors"
             >
-              WhatsApp Configuration ↗
+              {t('WhatsApp Configuration', 'WhatsApp Yapılandırması')} ↗
             </a>
-            {' '}and set the Callback URL to{' '}
-            <code className="text-[10px] bg-gray-50 px-1 rounded font-mono whitespace-nowrap">your-domain/api/webhooks</code>
+            {' '}{t('and set the Callback URL to', 'sayfasına gidip Callback URL alanını şu şekilde ayarlayın:')}{' '}
+            <code className="text-[10px] bg-gray-50 px-1 rounded font-mono whitespace-nowrap">{t('your-domain', 'alan-adiniz')}/api/webhooks</code>
           </p>
         </div>
       ) : (

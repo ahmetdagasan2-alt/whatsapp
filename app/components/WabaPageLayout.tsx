@@ -6,6 +6,7 @@
 import type { ReactNode } from 'react';
 
 import SidebarLayout from '@/app/components/SidebarLayout';
+import { getT } from '@/app/i18n/server';
 
 interface WabaPageLayoutProps {
   children: ReactNode;
@@ -20,7 +21,7 @@ interface WabaPageLayoutProps {
   icon?: React.ReactNode;
 }
 
-export default function WabaPageLayout({
+export default async function WabaPageLayout({
   children,
   userId,
   logoUrl,
@@ -28,10 +29,11 @@ export default function WabaPageLayout({
   title,
   description,
   isEmpty = false,
-  emptyMessage = 'Kayıt bulunamadı.',
+  emptyMessage,
   emptyDescription,
   icon,
 }: WabaPageLayoutProps) {
+  const t = await getT();
   return (
     <SidebarLayout userId={userId} logoUrl={logoUrl} appName={appName}>
       <div className="p-4 md:p-8 max-w-7xl mx-auto">
@@ -46,7 +48,7 @@ export default function WabaPageLayout({
                 {icon}
               </div>
             )}
-            <p className="text-base font-semibold text-slate-700">{emptyMessage}</p>
+            <p className="text-base font-semibold text-slate-700">{emptyMessage ?? t('No items found.', 'Kayıt bulunamadı.')}</p>
             {emptyDescription && <p className="text-sm text-slate-400 mt-1 max-w-sm mx-auto">{emptyDescription}</p>}
           </div>
         ) : (

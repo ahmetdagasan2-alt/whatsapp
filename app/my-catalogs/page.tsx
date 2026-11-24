@@ -12,32 +12,34 @@ import LoggedOut from '@/app/components/LoggedOut';
 import WabaPageLayout from '@/app/components/WabaPageLayout';
 import CatalogCard from '@/app/components/CatalogCard';
 import publicConfig from '@/app/publicConfig';
+import { getT } from '@/app/i18n/server';
 
 export default async function MyCatalogs() {
   const session = await auth0.getSession();
   if (!session) return <LoggedOut />;
 
   const userId = session.user.email;
+  const t = await getT();
   const appDetails = await getAppDetails(publicConfig.appId);
   const catalogs = await getCatalogs(userId);
 
   return (
     <WabaPageLayout
-      title="Kataloglar"
-      description="Uygulamanıza bağlı Facebook katalogları."
+      title={t('Catalogs', 'Kataloglar')}
+      description={t('Facebook catalogs connected to your app.', 'Uygulamanıza bağlı Facebook katalogları.')}
       userId={userId}
       logoUrl={appDetails.logo_url}
       appName={appDetails.name}
       isEmpty={catalogs.length === 0}
-      emptyMessage="Henüz katalog yok."
-      emptyDescription="Kurulum ekranından hesap bağladığınızda kataloglarınız burada görünecek."
+      emptyMessage={t('No catalogs yet.', 'Henüz katalog yok.')}
+      emptyDescription={t('Your catalogs will appear here once you connect an account from the home page.', 'Ana sayfadan hesap bağladığınızda kataloglarınız burada görünecek.')}
       icon={<BookOpen className="w-10 h-10" />}
     >
       {catalogs.map((catalog: CatalogWithDetails) => (
         <CatalogCard
           key={catalog.id}
           id={catalog.id}
-          name={catalog.name || 'İsimsiz katalog'}
+          name={catalog.name || t('Unnamed catalog', 'İsimsiz katalog')}
           businessId={catalog.business_id || ''}
         />
       ))}

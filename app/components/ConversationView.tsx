@@ -11,6 +11,7 @@ import { Phone, Clock, PhoneMissed } from 'lucide-react';
 import MessageBubble, { type Message } from '@/app/components/MessageBubble';
 import SendMessage from '@/app/components/SendMessage';
 import CallPermissionRibbon from '@/app/components/CallPermissionRibbon';
+import { useT } from '@/app/i18n/client';
 import type { PermissionState } from '@/app/types/calling';
 import { cn } from '@/lib/utils';
 
@@ -47,6 +48,7 @@ export default function ConversationView({
   hasMissedCall,
   onCallBack,
 }: ConversationViewProps) {
+  const t = useT();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -74,14 +76,14 @@ export default function ConversationView({
                 : 'text-gray-400 hover:bg-gray-50',
             )}
             aria-label={
-              callActive ? 'Call in progress' :
+              callActive ? t('Call in progress', 'Arama devam ediyor') :
               permissionState === 'granted' && permissionExpirationTime
-                ? 'Temporary permission — click to call'
+                ? t('Temporary permission — click to call', 'Geçici izin — aramak için tıklayın')
                 : permissionState === 'checking'
-                  ? 'Checking permissions...'
+                  ? t('Checking permissions...', 'İzinler kontrol ediliyor...')
                   : permissionState === 'requesting' || permissionState === 'denied' || permissionState === 'rate_limited'
-                    ? 'No call permission'
-                    : 'Start call'
+                    ? t('No call permission', 'Arama izni yok')
+                    : t('Start call', 'Arama başlat')
             }
           >
             <Phone className="w-5 h-5" aria-hidden="true" />
@@ -107,14 +109,16 @@ export default function ConversationView({
         <div role="alert" className="px-4 py-2 flex items-center justify-between border-b bg-red-50 border-red-200 text-xs">
           <div className="flex items-center gap-2">
             <PhoneMissed className="w-3.5 h-3.5 text-red-500" />
-            <span className="font-medium text-red-700">Missed call from {displayName}</span>
+            <span className="font-medium text-red-700">
+              {t(`Missed call from ${displayName}`, `${displayName} kişisinden cevapsız arama`)}
+            </span>
           </div>
           <button
             onClick={onCallBack}
             className="flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-red-600 text-white hover:bg-red-700 transition-colors"
           >
             <Phone className="w-3 h-3" />
-            Call back
+            {t('Call back', 'Geri ara')}
           </button>
         </div>
       )}
@@ -133,8 +137,10 @@ export default function ConversationView({
                 />
               </svg>
             </div>
-            <p className="text-sm font-medium text-gray-600">No messages yet</p>
-            <p className="text-xs text-gray-400 mt-1">Messages from {displayName} will appear here</p>
+            <p className="text-sm font-medium text-gray-600">{t('No messages yet', 'Henüz mesaj yok')}</p>
+            <p className="text-xs text-gray-400 mt-1">
+              {t(`Messages from ${displayName} will appear here`, `${displayName} kişisinden gelen mesajlar burada görünecek`)}
+            </p>
           </div>
         ) : (
           <>

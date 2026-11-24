@@ -5,13 +5,13 @@
 
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import {
-  Settings,
+  Home,
   Webhook,
   MessageSquare,
   Building2,
@@ -25,8 +25,13 @@ import {
   Menu,
   X,
   ShieldCheck,
+  ChevronDown,
+  SlidersHorizontal,
 } from 'lucide-react';
 
+import LanguageSwitcher from '@/app/components/LanguageSwitcher';
+import { useT } from '@/app/i18n/client';
+import type { T } from '@/app/i18n/locale';
 import { cn } from '@/lib/utils';
 
 interface SidebarLayoutProps {
@@ -36,61 +41,156 @@ interface SidebarLayoutProps {
   appName: string;
 }
 
-const navSections = [
-  {
-    title: 'Mesajlaşma',
-    items: [
-      {
-        label: 'Gelen Kutusu',
-        description: 'Tüm numaralarınızdan mesaj gönderin ve alın',
-        href: '/my-inbox',
-        Icon: MessageSquare,
-      },
-      {
-        label: 'Ücretli Mesajlar',
-        description: 'Şablon ve pazarlama mesajları gönderin',
-        href: '/paid_messaging',
-        Icon: Mail,
-      },
-    ],
-  },
-  {
-    title: 'Yönetim',
-    items: [
-      {
-        label: 'Kurulum',
-        description: 'Hesap bağlama ve onboarding ayarları',
-        href: '/',
-        Icon: Settings,
-      },
-      {
-        label: 'Webhook Kayıtları',
-        description: 'Gelen webhook olaylarını izleyin',
-        href: '/my-webhooks',
-        Icon: Webhook,
-      },
-    ],
-  },
-  {
-    title: 'Varlıklarım',
-    items: [
-      { label: 'WhatsApp Hesapları', href: '/my-wabas', Icon: Building2 },
-      { label: 'Facebook Sayfaları', href: '/my-pages', Icon: FileText },
-      { label: 'Reklam Hesapları', href: '/my-ad-accounts', Icon: Megaphone },
-      { label: 'Veri Kümeleri', href: '/my-datasets', Icon: Database },
-      { label: 'Kataloglar', href: '/my-catalogs', Icon: BookOpen },
-      { label: 'Instagram Hesapları', href: '/my-instagram-accounts', Icon: Instagram },
-    ],
-  },
-] as const satisfies ReadonlyArray<{
-  title: string;
-  items: ReadonlyArray<{ label: string; description?: string; href: string; Icon: typeof Settings }>;
-}>;
+interface NavItem {
+  label: string;
+  description?: string;
+  href: string;
+  Icon: typeof Home;
+}
+
+function getNavSections(t: T): { title: string; items: NavItem[] }[] {
+  return [
+    {
+      title: t('Messaging', 'Mesajlaşma'),
+      items: [
+        {
+          label: t('Home', 'Ana Sayfa'),
+          description: t('Connect your WhatsApp account', 'WhatsApp hesabınızı bağlayın'),
+          href: '/',
+          Icon: Home,
+        },
+        {
+          label: t('Inbox', 'Gelen Kutusu'),
+          description: t('Send and receive messages on all numbers', 'Tüm numaralarınızdan mesaj gönderin ve alın'),
+          href: '/my-inbox',
+          Icon: MessageSquare,
+        },
+        {
+          label: t('Paid Messages', 'Ücretli Mesajlar'),
+          description: t('Send template and marketing messages', 'Şablon ve pazarlama mesajları gönderin'),
+          href: '/paid_messaging',
+          Icon: Mail,
+        },
+      ],
+    },
+    {
+      title: t('My Assets', 'Varlıklarım'),
+      items: [
+        { label: t('WhatsApp Accounts', 'WhatsApp Hesapları'), href: '/my-wabas', Icon: Building2 },
+        { label: t('Facebook Pages', 'Facebook Sayfaları'), href: '/my-pages', Icon: FileText },
+        { label: t('Ad Accounts', 'Reklam Hesapları'), href: '/my-ad-accounts', Icon: Megaphone },
+        { label: t('Datasets', 'Veri Kümeleri'), href: '/my-datasets', Icon: Database },
+        { label: t('Catalogs', 'Kataloglar'), href: '/my-catalogs', Icon: BookOpen },
+        { label: t('Instagram Accounts', 'Instagram Hesapları'), href: '/my-instagram-accounts', Icon: Instagram },
+      ],
+    },
+    {
+      title: t('System', 'Sistem'),
+      items: [{ label: t('Webhook Logs', 'Webhook Kayıtları'), href: '/my-webhooks', Icon: Webhook }],
+    },
+  ];
+}
+
+function UserMenu({ userId }: { userId: string }) {
+  const t = useT();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const initial = (userId || '?').charAt(0).toUpperCase();
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onClick = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    document.addEventListener('mousedown', onClick);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onClick);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="flex items-center gap-1.5 rounded-full p-0.5 pr-2 hover:bg-slate-100 transition-colors"
+      >
+        <span className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-cyan to-brand-600 text-white text-sm font-semibold flex items-center justify-center">
+          {initial}
+        </span>
+        <ChevronDown className={cn('w-4 h-4 text-slate-400 transition-transform', open && 'rotate-180')} />
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 mt-2 w-72 rounded-xl bg-white shadow-xl ring-1 ring-slate-900/5 overflow-hidden z-[60]"
+        >
+          <div className="px-4 py-4 bg-gradient-to-br from-brand-50 to-white border-b border-slate-100 flex items-center gap-3">
+            <span className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-cyan to-brand-600 text-white font-semibold flex items-center justify-center flex-shrink-0">
+              {initial}
+            </span>
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                {t('Signed in as', 'Oturum açan')}
+              </p>
+              <p className="text-sm font-medium text-slate-800 truncate" title={userId}>
+                {userId}
+              </p>
+            </div>
+          </div>
+
+          <div className="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+            <span className="text-sm text-slate-600">{t('Language', 'Dil')}</span>
+            <LanguageSwitcher />
+          </div>
+
+          <div className="py-1.5">
+            <Link
+              href="/advanced"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
+            >
+              <SlidersHorizontal className="w-4 h-4 text-slate-400" />
+              {t('Advanced Setup', 'Gelişmiş Kurulum')}
+            </Link>
+            <a
+              href="/privacy"
+              role="menuitem"
+              className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
+            >
+              <ShieldCheck className="w-4 h-4 text-slate-400" />
+              {t('Privacy Policy', 'Gizlilik Politikası')}
+            </a>
+          </div>
+
+          <div className="border-t border-slate-100 py-1.5">
+            <a
+              href="/auth/logout"
+              role="menuitem"
+              className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50"
+            >
+              <LogOut className="w-4 h-4" />
+              {t('Log out', 'Çıkış Yap')}
+            </a>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function SidebarLayout({ children, userId }: SidebarLayoutProps) {
+  const t = useT();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const initial = (userId || '?').charAt(0).toUpperCase();
+  const navSections = getNavSections(t);
 
   return (
     <div className="h-screen flex flex-col bg-[#f5f7fb] overflow-hidden">
@@ -102,7 +202,7 @@ export default function SidebarLayout({ children, userId }: SidebarLayoutProps) 
             type="button"
             onClick={() => setMobileOpen((v) => !v)}
             className="md:hidden -ml-1 p-2 rounded-lg text-slate-500 hover:bg-slate-100"
-            aria-label="Menüyü aç/kapat"
+            aria-label={t('Toggle menu', 'Menüyü aç/kapat')}
           >
             {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -110,40 +210,18 @@ export default function SidebarLayout({ children, userId }: SidebarLayoutProps) 
             <Image
               src="/dekatre-logo.png"
               alt="Dekatre Danışmanlık"
-              width={459}
-              height={62}
+              width={453}
+              height={54}
               priority
               className="h-6 w-auto"
             />
             <span className="hidden sm:block h-6 w-px bg-gray-200" />
             <span className="hidden sm:block text-[13px] font-semibold text-slate-500 tracking-tight">
-              WhatsApp İş Platformu
+              {t('WhatsApp Business Platform', 'WhatsApp İş Platformu')}
             </span>
           </Link>
         </div>
-        <div className="flex items-center gap-2 md:gap-4">
-          <a
-            href="/privacy"
-            className="hidden md:inline-flex items-center gap-1.5 text-sm text-slate-500 hover:text-brand-700 transition-colors"
-          >
-            <ShieldCheck className="w-4 h-4" />
-            Gizlilik
-          </a>
-          <div className="hidden md:block h-6 w-px bg-gray-200" />
-          <div className="flex items-center gap-2.5" title={userId}>
-            <span className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-cyan to-brand-600 text-white text-sm font-semibold flex items-center justify-center flex-shrink-0">
-              {initial}
-            </span>
-            <span className="hidden lg:block text-sm font-medium text-slate-700 max-w-[220px] truncate">{userId}</span>
-          </div>
-          <a
-            href="/auth/logout"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 px-3 py-1.5 rounded-lg border border-gray-200 hover:border-brand-200 hover:bg-brand-50 hover:text-brand-700 transition-colors"
-          >
-            <LogOut className="w-4 h-4" />
-            <span className="hidden sm:inline">Çıkış Yap</span>
-          </a>
-        </div>
+        <UserMenu userId={userId} />
       </header>
 
       <div className="flex flex-1 min-h-0 overflow-hidden relative">
@@ -169,7 +247,6 @@ export default function SidebarLayout({ children, userId }: SidebarLayoutProps) 
                 <div className="space-y-0.5 px-3">
                   {section.items.map((item) => {
                     const isActive = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
-                    const description = 'description' in item ? item.description : undefined;
                     return (
                       <Link
                         key={item.href}
@@ -198,7 +275,9 @@ export default function SidebarLayout({ children, userId }: SidebarLayoutProps) 
                           >
                             {item.label}
                           </span>
-                          {description && <p className="text-[12px] text-slate-400 mt-0.5 leading-snug">{description}</p>}
+                          {item.description && (
+                            <p className="text-[12px] text-slate-400 mt-0.5 leading-snug">{item.description}</p>
+                          )}
                         </div>
                       </Link>
                     );
@@ -209,7 +288,7 @@ export default function SidebarLayout({ children, userId }: SidebarLayoutProps) 
           </nav>
           <div className="border-t border-gray-100 px-6 py-4">
             <p className="text-[12px] font-semibold text-slate-600">Dekatre Danışmanlık</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">WhatsApp Business API çözümü</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">SAP &amp; ABAP · {t('Consulting', 'Danışmanlık')} · {t('Support', 'Destek')}</p>
           </div>
         </aside>
 

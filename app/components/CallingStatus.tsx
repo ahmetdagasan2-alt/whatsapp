@@ -8,6 +8,7 @@
 import { useState, useEffect } from 'react';
 
 import { feGraphApiPostWrapper } from '@/app/feUtils';
+import { useT } from '@/app/i18n/client';
 import type { PhoneDetails } from '@/app/types/api';
 import { cn } from '@/lib/utils';
 
@@ -17,6 +18,7 @@ interface CallingStatusProps {
 }
 
 export default function CallingStatus({ phone, onCallingStatusChange }: CallingStatusProps) {
+  const t = useT();
   const [isCallingEnabled, setIsCallingEnabled] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
@@ -85,11 +87,13 @@ export default function CallingStatus({ phone, onCallingStatusChange }: CallingS
         role="button"
         tabIndex={0}
       >
-        {isLoading ? '...' : isCallingEnabled ? 'Calling On' : 'Calling Off'}
+        {isLoading ? '...' : isCallingEnabled ? t('Calling On', 'Arama Açık') : t('Calling Off', 'Arama Kapalı')}
       </div>
       {showTooltip && (
         <div className="absolute z-50 px-3 py-2 text-xs text-slate-700 bg-white border border-slate-200 rounded-xl shadow-lg whitespace-normal bottom-full mb-2 left-1/2 transform -translate-x-1/2 pointer-events-none">
-          {isCallingEnabled ? 'Click to disable calling' : 'Click to enable calling'}
+          {isCallingEnabled
+            ? t('Click to disable calling', 'Aramayı kapatmak için tıklayın')
+            : t('Click to enable calling', 'Aramayı açmak için tıklayın')}
           <div className="absolute w-2 h-2 bg-white border-r border-b border-slate-200 transform rotate-45 -bottom-1 left-1/2 -translate-x-1/2"></div>
         </div>
       )}

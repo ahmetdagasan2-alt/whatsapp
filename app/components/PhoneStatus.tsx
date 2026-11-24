@@ -8,6 +8,7 @@
 import { useState, useEffect } from 'react';
 
 import { feGraphApiPostWrapper } from '@/app/feUtils';
+import { useT } from '@/app/i18n/client';
 import type { PhoneDetails } from '@/app/types/api';
 
 export default function PhoneStatus({
@@ -21,6 +22,7 @@ export default function PhoneStatus({
   onStatusChange?: (newStatus: string) => void;
   externalStatus?: string;
 }) {
+  const t = useT();
   const [status, setStatus] = useState(phone.status);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -40,22 +42,27 @@ export default function PhoneStatus({
   const displayStatus =
     phone.code_verification_status === 'NOT_VERIFIED' ? 'UNVERIFIED' :
     status === 'PENDING' ? 'DISCONNECTED' : status;
+  const statusLabels: Record<string, string> = {
+    CONNECTED: t('CONNECTED', 'BAĞLI'),
+    DISCONNECTED: t('DISCONNECTED', 'BAĞLI DEĞİL'),
+    UNVERIFIED: t('UNVERIFIED', 'DOĞRULANMADI'),
+  };
 
   let tooltipMsg = null;
 
   if (errorMsg) {
     tooltipMsg = errorMsg;
   } else if (status === 'CONNECTED') {
-    tooltipMsg = 'Click to disconnect';
+    tooltipMsg = t('Click to disconnect', 'Bağlantıyı kesmek için tıklayın');
   } else if (phone.code_verification_status === 'NOT_VERIFIED') {
     // Phone has never completed OTP verification — must verify first
-    tooltipMsg = 'Verify phone number to connect';
+    tooltipMsg = t('Verify phone number to connect', 'Bağlanmak için telefon numarasını doğrulayın');
   } else if (status === 'PENDING' || (status === 'DISCONNECTED' && phone.code_verification_status === 'VERIFIED')) {
     // PENDING = already OTP-verified, awaiting Meta review
     // DISCONNECTED + VERIFIED = previously connected, can reconnect
-    tooltipMsg = 'Click to reconnect';
+    tooltipMsg = t('Click to reconnect', 'Yeniden bağlanmak için tıklayın');
   } else {
-    tooltipMsg = `Status: ${status}`;
+    tooltipMsg = t(`Status: ${status}`, `Durum: ${statusLabels[status] ?? status}`);
   }
 
   const onClickHandlerWrapper = async () => {
@@ -71,7 +78,7 @@ export default function PhoneStatus({
         onStatusChange?.('DISCONNECTED');
       } catch (error) {
         console.error('Failed to deregister phone:', error);
-        setErrorMsg('Failed to disconnect');
+        setErrorMsg(t('Failed to disconnect', 'Bağlantı kesilemedi'));
       } finally {
         setIsLoading(false);
       }
@@ -86,11 +93,11 @@ export default function PhoneStatus({
         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
       </svg>
-      <span className="font-medium">{status === 'CONNECTED' ? 'Disconnecting' : 'Connecting'}</span>
+      <span className="font-medium">{status === 'CONNECTED' ? t('Disconnecting', 'Bağlantı kesiliyor') : t('Connecting', 'Bağlanıyor')}</span>
     </div>
   ) : (
     <div className="flex items-center gap-1">
-      <span className="font-medium">{displayStatus}</span>
+      <span className="font-medium">{statusLabels[displayStatus] ?? displayStatus}</span>
     </div>
   );
 

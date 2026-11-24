@@ -13,6 +13,7 @@ import type {
   TemplateMediaParam,
   TemplateGatingData,
 } from '@/app/types/api';
+import { useT } from '@/app/i18n/client';
 
 interface PaidMessagingDashboardProps {
   wabas: WabaClientData[];
@@ -53,6 +54,7 @@ const emptyTabState: TabFormState = {
 };
 
 export default function PaidMessagingDashboard({ wabas }: PaidMessagingDashboardProps) {
+  const t = useT();
   const [activeTab, setActiveTab] = useState<TabKey>('template');
 
   // Shared selections
@@ -85,11 +87,11 @@ export default function PaidMessagingDashboard({ wabas }: PaidMessagingDashboard
 
   // MM Lite is marketing-specific, so only surface MARKETING templates there.
   const visibleTemplates = activeTab === 'mm_lite'
-    ? templates.filter(t => t.category === 'MARKETING')
+    ? templates.filter(tpl => tpl.category === 'MARKETING')
     : templates;
 
   const selectedTemplate = activeForm.selectedTemplateKey
-    ? visibleTemplates.find(t => `${t.name}::${t.language}` === activeForm.selectedTemplateKey)
+    ? visibleTemplates.find(tpl => `${tpl.name}::${tpl.language}` === activeForm.selectedTemplateKey)
     : null;
 
   const handleWabaChange = async (wabaId: string) => {
@@ -113,7 +115,7 @@ export default function PaidMessagingDashboard({ wabas }: PaidMessagingDashboard
       );
       const data = await res.json();
       if (!res.ok) {
-        const msg = data.error || 'Failed to fetch templates';
+        const msg = data.error || t('Failed to fetch templates', 'Şablonlar alınamadı');
         setTemplateForm(prev => ({ ...prev, error: msg }));
         setMmLiteForm(prev => ({ ...prev, error: msg }));
         return;
@@ -122,7 +124,7 @@ export default function PaidMessagingDashboard({ wabas }: PaidMessagingDashboard
       if (data.gating) setGating(data.gating);
     } catch (err: unknown) {
       if (err instanceof Error && err.name === 'AbortError') return;
-      const msg = err instanceof Error ? err.message : 'Failed to fetch templates';
+      const msg = err instanceof Error ? err.message : t('Failed to fetch templates', 'Şablonlar alınamadı');
       setTemplateForm(prev => ({ ...prev, error: msg }));
       setMmLiteForm(prev => ({ ...prev, error: msg }));
     } finally {
@@ -250,14 +252,20 @@ export default function PaidMessagingDashboard({ wabas }: PaidMessagingDashboard
       });
       const data = await res.json();
       if (!res.ok) {
-        updateForm({ error: data.error || 'Failed to send message', sending: false });
+        updateForm({ error: data.error || t('Failed to send message', 'Mesaj gönderilemedi'), sending: false });
         return;
       }
       const messageId = data.messages?.[0]?.id || 'unknown';
-      updateForm({ success: `Message sent successfully! Message ID: ${messageId}`, sending: false });
+      updateForm({
+        success: t(
+          `Message sent successfully! Message ID: ${messageId}`,
+          `Mesaj başarıyla gönderildi! Mesaj ID: ${messageId}`,
+        ),
+        sending: false,
+      });
     } catch (err: unknown) {
       updateForm({
-        error: err instanceof Error ? err.message : 'Failed to send message',
+        error: err instanceof Error ? err.message : t('Failed to send message', 'Mesaj gönderilemedi'),
         sending: false,
       });
     }
@@ -270,9 +278,9 @@ export default function PaidMessagingDashboard({ wabas }: PaidMessagingDashboard
       if (comp.type === 'FOOTER') return null;
 
       if (comp.type === 'HEADER' && comp.format && comp.format !== 'TEXT') {
-        const label = comp.format === 'IMAGE' ? 'Image URL'
-          : comp.format === 'VIDEO' ? 'Video URL'
-            : 'Document URL';
+        const label = comp.format === 'IMAGE' ? t('Image URL', 'Görsel URL')
+          : comp.format === 'VIDEO' ? t('Video URL', 'Video URL')
+            : t('Document URL', 'Belge URL');
         return (
           <div key={`media-${comp.type}`} className="space-y-1">
             <label className="text-xs font-medium text-gray-500">{label}</label>
@@ -280,7 +288,7 @@ export default function PaidMessagingDashboard({ wabas }: PaidMessagingDashboard
               type="url"
               value={activeForm.mediaValues['HEADER'] || ''}
               onChange={e => setMediaValue('HEADER', e.target.value)}
-              placeholder={`Enter ${label.toLowerCase()}...`}
+              placeholder={t(`Enter ${label.toLowerCase()}...`, `${label} girin...`)}
               className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
             />
           </div>
@@ -293,7 +301,7 @@ export default function PaidMessagingDashboard({ wabas }: PaidMessagingDashboard
 
       return (
         <div key={`vars-${comp.type}`} className="space-y-2">
-          <p className="text-xs font-medium text-gray-500">{comp.type} variables</p>
+          <p className="text-xs font-medium text-gray-500">{t(`${comp.type} variables`, `${comp.type} değişkenleri`)}</p>
           <p className="text-xs text-gray-400 font-mono">{comp.text}</p>
           {vars.map(v => (
             <div key={`${comp.type}-${v}`} className="flex items-center gap-2">
@@ -302,7 +310,7 @@ export default function PaidMessagingDashboard({ wabas }: PaidMessagingDashboard
                 type="text"
                 value={activeForm.variableValues[comp.type]?.[v] || ''}
                 onChange={e => setVariableValue(comp.type, v, e.target.value)}
-                placeholder={`Value for {{${v}}}`}
+                placeholder={t(`Value for {{${v}}}`, `{{${v}}} için değer`)}
                 className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
               />
             </div>
@@ -312,29 +320,32 @@ export default function PaidMessagingDashboard({ wabas }: PaidMessagingDashboard
     });
   };
 
-  const sendButtonLabel = activeTab === 'template' ? 'Send Template Message' : 'Send Marketing Message Lite';
+  const sendButtonLabel =
+    activeTab === 'template'
+      ? t('Send Template Message', 'Şablon Mesajı Gönder')
+      : t('Send Marketing Message Lite', 'Pazarlama Mesajı Gönder');
 
   const templateEmptyLabel = !selectedWabaId
-    ? 'Select a WABA first...'
+    ? t('Select a WABA first...', 'Önce bir WhatsApp hesabı seçin...')
     : paymentBlocked
-      ? 'Payment method required'
+      ? t('Payment method required', 'Ödeme yöntemi gerekli')
       : visibleTemplates.length === 0
         ? activeTab === 'mm_lite'
-          ? 'No approved MARKETING templates found'
-          : 'No approved templates found'
-        : 'Select a template...';
+          ? t('No approved MARKETING templates found', 'Onaylı PAZARLAMA şablonu bulunamadı')
+          : t('No approved templates found', 'Onaylı şablon bulunamadı')
+        : t('Select a template...', 'Bir şablon seçin...');
 
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-5 max-w-2xl">
       {/* WABA selector */}
       <div className="space-y-1">
-        <label className="text-sm font-medium text-gray-700">WABA</label>
+        <label className="text-sm font-medium text-gray-700">{t('WABA', 'WhatsApp Hesabı (WABA)')}</label>
         <select
           value={selectedWabaId}
           onChange={e => handleWabaChange(e.target.value)}
           className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white"
         >
-          <option value="">Select a WABA...</option>
+          <option value="">{t('Select a WABA...', 'Bir WhatsApp hesabı seçin...')}</option>
           {wabas.map((waba, index) => (
             <option key={`${waba.id}-${index}`} value={waba.id}>
               {waba.name || waba.id}
@@ -346,16 +357,19 @@ export default function PaidMessagingDashboard({ wabas }: PaidMessagingDashboard
       {/* Payment method warning — applies to both tabs */}
       {paymentBlocked && (
         <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
-          <p className="text-sm font-medium text-amber-800">Payment method required</p>
+          <p className="text-sm font-medium text-amber-800">{t('Payment method required', 'Ödeme yöntemi gerekli')}</p>
           <p className="text-xs text-amber-600 mt-0.5">
-            This WABA does not have a payment method attached. Add a payment method in your WhatsApp Business Manager to send paid messages.
+            {t(
+              'This WABA does not have a payment method attached. Add a payment method in your WhatsApp Business Manager to send paid messages.',
+              'Bu WhatsApp hesabına bağlı bir ödeme yöntemi yok. Ücretli mesaj göndermek için WhatsApp Business Manager üzerinden ödeme yöntemi ekleyin.',
+            )}
           </p>
         </div>
       )}
 
       {/* Phone selector */}
       <div className="space-y-1">
-        <label className="text-sm font-medium text-gray-700">Phone Number</label>
+        <label className="text-sm font-medium text-gray-700">{t('Phone Number', 'Telefon Numarası')}</label>
         <select
           value={selectedPhoneId}
           onChange={e => setSelectedPhoneId(e.target.value)}
@@ -363,7 +377,13 @@ export default function PaidMessagingDashboard({ wabas }: PaidMessagingDashboard
           className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 bg-white disabled:opacity-50"
         >
           <option value="">
-            {!selectedWabaId ? 'Select a WABA first...' : paymentBlocked ? 'Payment method required' : phones.length === 0 ? 'No phones registered for this WABA' : 'Select a phone number...'}
+            {!selectedWabaId
+              ? t('Select a WABA first...', 'Önce bir WhatsApp hesabı seçin...')
+              : paymentBlocked
+                ? t('Payment method required', 'Ödeme yöntemi gerekli')
+                : phones.length === 0
+                  ? t('No phones registered for this WABA', 'Bu hesapta kayıtlı numara yok')
+                  : t('Select a phone number...', 'Bir telefon numarası seçin...')}
           </option>
           {phones.map(phone => (
             <option key={phone.id} value={phone.id}>
@@ -375,10 +395,10 @@ export default function PaidMessagingDashboard({ wabas }: PaidMessagingDashboard
 
       {/* Tab strip */}
       <div className="border-b border-gray-200">
-        <nav className="flex gap-6" aria-label="Paid messaging options">
+        <nav className="flex gap-6" aria-label={t('Paid messaging options', 'Ücretli mesaj seçenekleri')}>
           {([
-            { key: 'template', label: 'Template Messages' },
-            { key: 'mm_lite', label: 'Marketing Messages Lite' },
+            { key: 'template', label: t('Template Messages', 'Şablon Mesajları') },
+            { key: 'mm_lite', label: t('Marketing Messages Lite', 'Pazarlama Mesajları (Lite)') },
           ] as const).map(tab => {
             const isActive = activeTab === tab.key;
             return (
@@ -403,23 +423,28 @@ export default function PaidMessagingDashboard({ wabas }: PaidMessagingDashboard
       {/* MM Lite tab intro */}
       {activeTab === 'mm_lite' && (
         <div className="bg-indigo-50 border border-indigo-100 rounded-lg p-3">
-          <p className="text-sm font-medium text-indigo-900">Marketing Messages Lite</p>
+          <p className="text-sm font-medium text-indigo-900">{t('Marketing Messages Lite', 'Pazarlama Mesajları (Lite)')}</p>
           <p className="text-xs text-indigo-700 mt-0.5">
-            Send marketing template messages through the MM Lite flow. Only <strong>MARKETING</strong>-category templates are shown below. Recipients must have opted in to receive marketing messages from this business.
+            {t('Send marketing template messages through the MM Lite flow. Only', 'Pazarlama şablon mesajlarını MM Lite akışıyla gönderin. Aşağıda yalnızca')}{' '}
+            <strong>{t('MARKETING', 'PAZARLAMA')}</strong>
+            {t(
+              '-category templates are shown below. Recipients must have opted in to receive marketing messages from this business.',
+              ' kategorisindeki şablonlar listelenir. Alıcıların bu işletmeden pazarlama mesajı almayı onaylamış olması gerekir.',
+            )}
           </p>
         </div>
       )}
 
       {/* Template selector */}
       <div className="space-y-1">
-        <label className="text-sm font-medium text-gray-700">Message Template</label>
+        <label className="text-sm font-medium text-gray-700">{t('Message Template', 'Mesaj Şablonu')}</label>
         {loadingTemplates ? (
           <div className="flex items-center gap-2 px-3 py-2 text-sm text-gray-400">
             <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            Loading templates...
+            {t('Loading templates...', 'Şablonlar yükleniyor...')}
           </div>
         ) : (
           <select
@@ -444,11 +469,11 @@ export default function PaidMessagingDashboard({ wabas }: PaidMessagingDashboard
       {/* Template preview + variable inputs */}
       {selectedTemplate && (
         <div className="border border-gray-200 rounded-lg p-4 bg-gray-50 space-y-3">
-          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Template Variables</p>
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{t('Template Variables', 'Şablon Değişkenleri')}</p>
           {renderVariableInputs()}
           {selectedTemplate.components.find(c => c.type === 'FOOTER') && (
             <p className="text-xs text-gray-400 italic">
-              Footer: {selectedTemplate.components.find(c => c.type === 'FOOTER')?.text}
+              {t('Footer', 'Alt bilgi')}: {selectedTemplate.components.find(c => c.type === 'FOOTER')?.text}
             </p>
           )}
         </div>
@@ -456,7 +481,7 @@ export default function PaidMessagingDashboard({ wabas }: PaidMessagingDashboard
 
       {/* Recipient */}
       <div className="space-y-1">
-        <label className="text-sm font-medium text-gray-700">Recipient Phone Number</label>
+        <label className="text-sm font-medium text-gray-700">{t('Recipient Phone Number', 'Alıcı Telefon Numarası')}</label>
         <input
           type="tel"
           value={activeForm.recipient}
@@ -466,7 +491,9 @@ export default function PaidMessagingDashboard({ wabas }: PaidMessagingDashboard
           className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:opacity-50"
         />
         {activeForm.recipient && !/^\+\d{7,15}$/.test(activeForm.recipient) && (
-          <p className="text-xs text-red-500 mt-1">Phone number must be in E.164 format (e.g., +1234567890)</p>
+          <p className="text-xs text-red-500 mt-1">
+            {t('Phone number must be in E.164 format (e.g., +1234567890)', 'Telefon numarası uluslararası formatta olmalıdır (ör. +905551234567)')}
+          </p>
         )}
       </div>
 
@@ -475,18 +502,21 @@ export default function PaidMessagingDashboard({ wabas }: PaidMessagingDashboard
         <>
           <div className="space-y-1">
             <label className="text-sm font-medium text-gray-700">
-              Campaign tracking label <span className="text-gray-400 font-normal">(optional)</span>
+              {t('Campaign tracking label', 'Kampanya takip etiketi')}{' '}
+              <span className="text-gray-400 font-normal">{t('(optional)', '(isteğe bağlı)')}</span>
             </label>
             <input
               type="text"
               value={activeForm.campaignLabel}
               onChange={e => updateForm({ campaignLabel: e.target.value })}
               disabled={paymentBlocked}
-              placeholder="e.g. spring-2026-promo"
+              placeholder={t('e.g. spring-2026-promo', 'ör. bahar-2026-kampanya')}
               className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:opacity-50"
             />
             <p className="text-xs text-gray-400 mt-1">
-              Passed as <code className="font-mono">biz_opaque_callback_data</code> so you can correlate delivery/read webhooks to a campaign.
+              {t('Passed as', 'Teslim/okundu bildirimlerini kampanyayla eşleştirebilmeniz için')}{' '}
+              <code className="font-mono">biz_opaque_callback_data</code>{' '}
+              {t('so you can correlate delivery/read webhooks to a campaign.', 'olarak iletilir.')}
             </p>
           </div>
 
@@ -499,7 +529,10 @@ export default function PaidMessagingDashboard({ wabas }: PaidMessagingDashboard
               className="mt-1 h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-400"
             />
             <span className="text-sm text-gray-700">
-              I confirm the recipient has opted in to receive marketing messages from this business.
+              {t(
+                'I confirm the recipient has opted in to receive marketing messages from this business.',
+                'Alıcının bu işletmeden pazarlama mesajı almayı onayladığını teyit ediyorum.',
+              )}
             </span>
           </label>
         </>
@@ -529,7 +562,7 @@ export default function PaidMessagingDashboard({ wabas }: PaidMessagingDashboard
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
             </svg>
-            Sending...
+            {t('Sending...', 'Gönderiliyor...')}
           </>
         ) : (
           sendButtonLabel

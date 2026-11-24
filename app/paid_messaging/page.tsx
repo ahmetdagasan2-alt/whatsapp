@@ -10,6 +10,7 @@ import LoggedOut from '@/app/components/LoggedOut';
 import SidebarLayout from '@/app/components/SidebarLayout';
 import PaidMessagingDashboard from '@/app/components/PaidMessagingDashboard';
 import publicConfig from '@/app/publicConfig';
+import { getT } from '@/app/i18n/server';
 import { Mail } from 'lucide-react';
 
 export default async function PaidMessaging() {
@@ -17,6 +18,7 @@ export default async function PaidMessaging() {
   if (!session) return <LoggedOut />;
 
   const userId = session.user.email;
+  const t = await getT();
   const appDetails = await getAppDetails(publicConfig.appId);
   const wabas = await getWabas(userId);
 
@@ -31,9 +33,12 @@ export default async function PaidMessaging() {
     <SidebarLayout userId={userId} logoUrl={appDetails.logo_url} appName={appDetails.name}>
       <div className="p-4 md:p-8 max-w-7xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Ücretli Mesajlar</h1>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{t('Paid Messages', 'Ücretli Mesajlar')}</h1>
           <p className="text-sm text-slate-500 mt-1">
-            WhatsApp Business API üzerinden şablon mesajları ve pazarlama mesajları (Marketing Messages Lite) gönderin.
+            {t(
+              'Send template messages and Marketing Messages Lite via the WhatsApp Business API.',
+              'WhatsApp Business API üzerinden şablon mesajları ve pazarlama mesajları (Marketing Messages Lite) gönderin.',
+            )}
           </p>
         </div>
         {wabas.length === 0 ? (
@@ -41,9 +46,12 @@ export default async function PaidMessaging() {
             <div className="mb-3 flex justify-center text-gray-300">
               <Mail className="w-10 h-10" />
             </div>
-            <p className="text-sm font-medium text-gray-600">Henüz WhatsApp hesabı yok.</p>
+            <p className="text-sm font-medium text-gray-600">{t('No WhatsApp accounts yet.', 'Henüz WhatsApp hesabı yok.')}</p>
             <p className="text-xs text-gray-400 mt-1 max-w-sm mx-auto">
-              Kurulum ekranından hesap bağladığınızda WhatsApp hesaplarınız burada görünecek.
+              {t(
+                'Your WhatsApp accounts will appear here once you connect an account from the home page.',
+                'Ana sayfadan hesap bağladığınızda WhatsApp hesaplarınız burada görünecek.',
+              )}
             </p>
           </div>
         ) : (

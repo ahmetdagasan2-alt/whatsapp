@@ -13,6 +13,8 @@ import { Settings2, Code2, Rocket, ChevronRight, ExternalLink, Info, CheckCircle
 import { formatErrors } from '@/app/errorformat';
 import { feGraphApiPostWrapper } from '@/app/feUtils';
 import FBL4BLauncher from '@/app/components/Fbl4bLauncher';
+import { useT } from '@/app/i18n/client';
+import type { T } from '@/app/i18n/locale';
 import type { SessionInfo } from '@/app/types/api';
 import { cn } from '@/lib/utils';
 
@@ -259,85 +261,87 @@ function TipBody({
   );
 }
 
-const VERSION_TIP = (
+const versionTip = (t: T) => (
   <TipSection
-    title="ES Version Guide"
+    title={t('ES Version Guide', 'ES Sürüm Rehberi')}
     items={[
-      { name: 'v2', desc: 'Classic ES with multiple forks and legacy features support.' },
-      { name: 'v2-public-preview', desc: 'Mirrors v2 but uses Unified Onboarding UI for non-forked flows.' },
-      { name: 'v3', desc: 'Similar to v2 without forks. Adds app-only feature flag and removes proxy sharing.' },
-      { name: 'v3-public-preview', desc: 'Reveals Unified Onboarding UI for Cloud API onboarding.' },
-      { name: 'v3-alpha-1', desc: 'Alpha release with expanded Unified Onboarding for select partners/products.' },
-      { name: 'v4-public-preview', desc: 'Preview version of v4 with Unified Onboarding UI for testing and feedback.' },
-      { name: 'v4 (Recommended for production)', desc: 'Latest major release with enhanced features.' },
+      { name: 'v2', desc: t('Classic ES with multiple forks and legacy features support.', 'Çoklu akış ve eski özellik desteğine sahip klasik ES.') },
+      { name: 'v2-public-preview', desc: t('Mirrors v2 but uses Unified Onboarding UI for non-forked flows.', 'v2 ile aynıdır, ancak tekil akışlarda Unified Onboarding arayüzünü kullanır.') },
+      { name: 'v3', desc: t('Similar to v2 without forks. Adds app-only feature flag and removes proxy sharing.', 'Akış ayrımı olmayan v2 benzeri. app-only özelliğini ekler, proxy paylaşımını kaldırır.') },
+      { name: 'v3-public-preview', desc: t('Reveals Unified Onboarding UI for Cloud API onboarding.', 'Cloud API kaydı için Unified Onboarding arayüzünü açar.') },
+      { name: 'v3-alpha-1', desc: t('Alpha release with expanded Unified Onboarding for select partners/products.', 'Seçili iş ortakları/ürünler için genişletilmiş Unified Onboarding alfa sürümü.') },
+      { name: 'v4-public-preview', desc: t('Preview version of v4 with Unified Onboarding UI for testing and feedback.', 'Test ve geri bildirim için Unified Onboarding arayüzlü v4 önizlemesi.') },
+      { name: t('v4 (Recommended for production)', 'v4 (Canlı ortam için önerilir)'), desc: t('Latest major release with enhanced features.', 'Gelişmiş özelliklere sahip en güncel ana sürüm.') },
     ]}
     docLink={{
       href: 'https://developers.facebook.com/documentation/business-messaging/whatsapp/embedded-signup/versions',
-      label: 'View version documentation',
+      label: t('View version documentation', 'Sürüm dokümantasyonunu görüntüle'),
     }}
   />
 );
 
-const FEATURE_TYPE_TIP = (
+const featureTypeTip = (t: T) => (
   <TipSection
-    title="ES Feature Type"
+    title={t('ES Feature Type', 'ES Özellik Türü')}
     items={[
       {
         name: 'whatsapp_business_app_onboarding',
-        desc: 'Enables the WhatsApp Business App phone number onboarding custom flow.',
+        desc: t('Enables the WhatsApp Business App phone number onboarding custom flow.', 'WhatsApp Business App numarası ile kayıt akışını etkinleştirir.'),
       },
-      { name: 'only_waba_sharing', desc: 'Enables the WhatsApp Business App phone number onboarding custom flow.' },
-      { name: 'marketing_messages_lite', desc: 'Enables the MM API for WhatsApp onboarding custom flow.' },
-      { name: 'none (Default)', desc: 'Leave blank to enable the default onboarding flow.' },
+      { name: 'only_waba_sharing', desc: t('Enables the WhatsApp Business App phone number onboarding custom flow.', 'WhatsApp Business App numarası ile kayıt akışını etkinleştirir.') },
+      { name: 'marketing_messages_lite', desc: t('Enables the MM API for WhatsApp onboarding custom flow.', 'WhatsApp için pazarlama mesajları (MM API) kayıt akışını etkinleştirir.') },
+      { name: t('none (Default)', 'yok (Varsayılan)'), desc: t('Leave blank to enable the default onboarding flow.', 'Varsayılan kayıt akışı için boş bırakın.') },
     ]}
-    footer="Indicates a flow or feature to enable."
+    footer={t('Indicates a flow or feature to enable.', 'Etkinleştirilecek akışı veya özelliği belirtir.')}
     docLink={{
       href: 'https://developers.facebook.com/documentation/business-messaging/whatsapp/embedded-signup/versions#overview-of-feature-availability',
-      label: 'View feature availability documentation',
+      label: t('View feature availability documentation', 'Özellik dokümantasyonunu görüntüle'),
     }}
   />
 );
 
-const FEATURES_TIP = (
+const featuresTip = (t: T) => (
   <TipSection
-    title="ES Features"
+    title={t('ES Features', 'ES Özellikleri')}
     items={[
       {
         name: 'app_only_install',
-        desc: 'Allows partners to access WABAs via API using a granular token (BISU), without creating a system user access token (SUAT).',
+        desc: t('Allows partners to access WABAs via API using a granular token (BISU), without creating a system user access token (SUAT).', 'Sistem kullanıcısı tokenı (SUAT) oluşturmadan, ayrıntılı bir token (BISU) ile WABA’lara API erişimi sağlar.'),
       },
-      { name: 'marketing_messages_lite', desc: 'Enables the MM API for WhatsApp onboarding flow.' },
+      { name: 'marketing_messages_lite', desc: t('Enables the MM API for WhatsApp onboarding flow.', 'WhatsApp için pazarlama mesajları (MM API) akışını etkinleştirir.') },
     ]}
-    footer="Indicates a flow or feature to enable. Select one or more, or leave empty for default behavior."
+    footer={t('Indicates a flow or feature to enable. Select one or more, or leave empty for default behavior.', 'Etkinleştirilecek akış veya özellikler. Bir veya daha fazlasını seçin ya da varsayılan için boş bırakın.')}
     docLink={{
       href: 'https://developers.facebook.com/documentation/business-messaging/whatsapp/embedded-signup/versions#overview-of-feature-availability',
-      label: 'View feature availability documentation',
+      label: t('View feature availability documentation', 'Özellik dokümantasyonunu görüntüle'),
     }}
   />
 );
 
-function makePayloadBuilderTip(appId: string | number) {
+function makePayloadBuilderTip(appId: string | number, t: T) {
   const devxUrl = `https://developers.facebook.com/apps/${appId}/business-login/configurations/`;
   return (
     <div>
       <div className="px-4 pt-3.5 pb-2 border-b border-gray-100">
-        <p className="text-[13px] font-bold text-gray-900">Payload Builder</p>
+        <p className="text-[13px] font-bold text-gray-900">{t('Configuration', 'Yapılandırma')}</p>
       </div>
       <div className="px-4 py-3">
         <p className="text-[12px] text-gray-500 leading-relaxed">
-          Your Tech Provider configuration token. Each config maps to a distinct app setup in Meta&apos;s system —
-          controls which app_id and permissions are used.
+          {t(
+            "Your Tech Provider configuration token. Each config maps to a distinct app setup in Meta's system — controls which app_id and permissions are used.",
+            'Tech Provider yapılandırma kimliğiniz. Her yapılandırma Meta sisteminde ayrı bir uygulama kurulumuna karşılık gelir; hangi app_id ve izinlerin kullanılacağını belirler.',
+          )}
         </p>
       </div>
       <div className="px-4 pb-3.5 border-t border-gray-100 pt-3">
-        <p className="text-[12px] font-bold text-gray-800 mb-1">Need a new config?</p>
+        <p className="text-[12px] font-bold text-gray-800 mb-1">{t('Need a new config?', 'Yeni yapılandırma mı gerekiyor?')}</p>
         <a
           href={devxUrl}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 text-[12px] text-blue-600 hover:text-blue-800 font-medium transition-colors"
         >
-          Create one in DevX
+          {t('Create one in DevX', 'DevX üzerinde oluşturun')}
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="11"
@@ -369,6 +373,7 @@ function FeaturesMultiSelect({
   selected: string[];
   onChange: (v: string[]) => void;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [dropdownStyle, setDropdownStyle] = useState<React.CSSProperties>({});
   const [mounted, setMounted] = useState(false);
@@ -417,7 +422,7 @@ function FeaturesMultiSelect({
 
   const displayText =
     selected.length === 0 ? (
-      <span className="text-gray-300">None (default)</span>
+      <span className="text-gray-300">{t('None (default)', 'Yok (varsayılan)')}</span>
     ) : (
       selected.map((s, i) => (
         <span key={s} className="inline-flex items-center gap-0.5">
@@ -450,7 +455,7 @@ function FeaturesMultiSelect({
         ))
       ) : (
         <div className="px-4 py-3">
-          <p className="text-[12px] text-gray-400">No feature options available for this version.</p>
+          <p className="text-[12px] text-gray-400">{t('No feature options available for this version.', 'Bu sürüm için özellik seçeneği yok.')}</p>
         </div>
       )}
     </div>
@@ -518,13 +523,14 @@ function Toggle({
 
 type Step = 1 | 2 | 3;
 function StepIndicator({ current }: { current: Step }) {
+  const t = useT();
   const steps = [
-    { id: 1 as Step, label: 'Configure', sub: 'Set parameters' },
-    { id: 2 as Step, label: 'Review Payload', sub: 'JSON ready' },
-    { id: 3 as Step, label: 'Launch & Review', sub: 'Run the flow' },
+    { id: 1 as Step, label: t('Configure', 'Yapılandır'), sub: t('Set parameters', 'Parametreleri ayarla') },
+    { id: 2 as Step, label: t('Review Payload', 'Payload’u incele'), sub: t('JSON ready', 'JSON hazır') },
+    { id: 3 as Step, label: t('Launch & Review', 'Başlat ve incele'), sub: t('Run the flow', 'Akışı çalıştır') },
   ];
   return (
-    <div className="flex items-center gap-0 mb-6">
+    <div className="flex flex-wrap items-center gap-y-2 mb-6">
       {steps.map((s, i) => {
         const done = current > s.id;
         const active = current === s.id;
@@ -630,6 +636,7 @@ export default function ClientDashboard({
   publicEsFeatureTypes,
   publicEsFeatureOptions,
 }: ClientDashboardProps) {
+  const t = useT();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -808,17 +815,20 @@ export default function ClientDashboard({
           href={`https://developers.facebook.com/apps/${appId}`}
           className="hover:text-gray-700 transition-colors font-mono"
         >
-          Uygulama {appId}
+          {t('App', 'Uygulama')} {appId}
         </a>
         <ChevronRight className="w-3 h-3" />
-        <span className="text-gray-600">Kurulum</span>
+        <span className="text-gray-600">{t('Advanced Setup', 'Gelişmiş Kurulum')}</span>
       </div>
 
       {/* Page title */}
       <div className="mb-5">
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Kurulum</h1>
+        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{t('Advanced Setup', 'Gelişmiş Kurulum')}</h1>
         <p className="text-sm text-slate-500 mt-1">
-          İşletme hesaplarını Embedded Signup ile bağlayın. Seçenekleri değiştirdikçe JSON anında güncellenir.
+          {t(
+            'Technical Embedded Signup settings for developers. The JSON updates live as you adjust options.',
+            'Geliştiriciler için teknik Embedded Signup ayarları. Seçenekleri değiştirdikçe JSON anında güncellenir.',
+          )}
         </p>
       </div>
 
@@ -832,13 +842,13 @@ export default function ClientDashboard({
           {/* Payload Builder card */}
           <SectionCard
             icon={<Settings2 className="w-4 h-4" />}
-            title="Payload Builder"
-            subtitle="Select a configuration and set parameters"
+            title={t('Payload Builder', 'Payload Oluşturucu')}
+            subtitle={t('Select a configuration and set parameters', 'Bir yapılandırma seçin ve parametreleri ayarlayın')}
           >
             <div className="space-y-5">
               <SelectField
-                label="Config"
-                tip={makePayloadBuilderTip(appId)}
+                label={t('Config', 'Yapılandırma')}
+                tip={makePayloadBuilderTip(appId, t)}
                 value={esOptionConfig}
                 onChange={(e) => setCfg(e.target.value)}
               >
@@ -850,26 +860,26 @@ export default function ClientDashboard({
               </SelectField>
               {configError && (
                 <p className="text-[11px] text-red-400 font-normal -mt-3 leading-relaxed" style={{ fontFamily: 'inherit' }}>
-                  No config selected — please{' '}
+                  {t('No config selected — please', 'Yapılandırma seçilmedi — lütfen')}{' '}
                   <a
                     href={`https://developers.facebook.com/apps/${appId}/business-login/configurations/`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-0.5 text-red-500 underline underline-offset-2 hover:text-red-600 transition-colors font-medium"
                   >
-                    create one
+                    {t('create one', 'bir tane oluşturun')}
                     <svg className="w-2.5 h-2.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                     </svg>
                   </a>
-                  {' '}in DevX first.
+                  {' '}{t('in DevX first.', '(DevX üzerinde).')}
                 </p>
               )}
 
               <div className="grid grid-cols-2 gap-4">
                 <SelectField
-                  label="Version"
-                  tip={VERSION_TIP}
+                  label={t('Version', 'Sürüm')}
+                  tip={versionTip(t)}
                   value={esOptionVersion}
                   onChange={(e) => setVer(e.target.value)}
                 >
@@ -880,13 +890,13 @@ export default function ClientDashboard({
                     ))}
                 </SelectField>
                 <SelectField
-                  label="Feature Type"
-                  tip={FEATURE_TYPE_TIP}
+                  label={t('Feature Type', 'Özellik Türü')}
+                  tip={featureTypeTip(t)}
                   value={esOptionFeatureType}
                   onChange={(e) => setFt(e.target.value)}
                 >
                   <option key="" value="">
-                    None
+                    {t('None', 'Yok')}
                   </option>
                   {publicEsFeatureTypes[esOptionVersion]?.map((ft: string) => (
                     <option key={ft} value={ft}>
@@ -898,7 +908,7 @@ export default function ClientDashboard({
 
               <div>
                 <label className="flex items-center text-[11px] font-semibold text-gray-500 mb-1.5 uppercase tracking-wide">
-                  Features <HelpDot tip={FEATURES_TIP} />
+                  {t('Features', 'Özellikler')} <HelpDot tip={featuresTip(t)} />
                 </label>
                 <FeaturesMultiSelect
                   options={publicEsFeatureOptions?.[esOptionVersion] ?? []}
@@ -912,8 +922,8 @@ export default function ClientDashboard({
           {/* Generated Payload card */}
           <SectionCard
             icon={<Code2 className="w-4 h-4" />}
-            title="Generated Payload"
-            subtitle="Passed to FB.login(callback, payload) · updates live"
+            title={t('Generated Payload', 'Oluşturulan Payload')}
+            subtitle={t('Passed to FB.login(callback, payload) · updates live', 'FB.login(callback, payload) fonksiyonuna iletilir · anlık güncellenir')}
           >
             <div className="bg-gray-50 rounded-lg overflow-hidden border border-gray-200">
               <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200">
@@ -934,47 +944,47 @@ export default function ClientDashboard({
             </div>
             <p className="flex items-center gap-1.5 text-[11px] text-gray-400 mt-3">
               <Info className="w-3 h-3 flex-shrink-0" />
-              This JSON is generated from the configuration above and updates live as you change options.
+              {t('This JSON is generated from the configuration above and updates live as you change options.', 'Bu JSON yukarıdaki yapılandırmadan oluşturulur ve seçenekleri değiştirdikçe güncellenir.')}
             </p>
           </SectionCard>
 
           {/* Server Actions After Signup — moved to bottom */}
           <SectionCard
             icon={<Server className="w-4 h-4" />}
-            title="Post-Signup Server Actions"
-            subtitle="Automatic server-side calls triggered on a successful embedded signup"
+            title={t('Post-Signup Server Actions', 'Kayıt Sonrası Sunucu İşlemleri')}
+            subtitle={t('Automatic server-side calls triggered on a successful embedded signup', 'Başarılı bir kayıttan sonra otomatik çalışan sunucu işlemleri')}
           >
             <div className="space-y-3">
               <Toggle
                 checked={esOptionReg}
                 onChange={setReg}
-                label="Register number"
+                label={t('Register number', 'Numarayı kaydet')}
                 tip={
                   <TipBody
-                    title="Register number"
-                    body="Calls the register phone number API automatically after a successful signup. Required before sending messages. Disable if you want to register manually."
+                    title={t('Register number', 'Numarayı kaydet')}
+                    body={t('Calls the register phone number API automatically after a successful signup. Required before sending messages. Disable if you want to register manually.', 'Başarılı kayıttan sonra telefon numarası kayıt API’sini otomatik çağırır. Mesaj göndermeden önce gereklidir. Elle kaydetmek istiyorsanız kapatın.')}
                   />
                 }
               />
               <Toggle
                 checked={esOptionSub}
                 onChange={setEsOptionSub}
-                label="Subscribe webhooks"
+                label={t('Subscribe webhooks', 'Webhook aboneliği')}
                 tip={
                   <TipBody
-                    title="Subscribe webhooks"
-                    body="Subscribes the WABA to your app's webhooks automatically after signup. Disable if you manage webhook subscriptions separately."
+                    title={t('Subscribe webhooks', 'Webhook aboneliği')}
+                    body={t("Subscribes the WABA to your app's webhooks automatically after signup. Disable if you manage webhook subscriptions separately.", 'Kayıttan sonra WABA’yı uygulamanızın webhook’larına otomatik abone eder. Abonelikleri ayrıca yönetiyorsanız kapatın.')}
                   />
                 }
               />
               <Toggle
                 checked={esOptionCalling}
                 onChange={setEsOptionCalling}
-                label="Enable calling"
+                label={t('Enable calling', 'Aramayı etkinleştir')}
                 tip={
                   <TipBody
-                    title="Enable calling"
-                    body="Enables WhatsApp Calling API on the phone number after signup. This allows inbound and outbound voice calls. You can also toggle calling per phone from the inbox."
+                    title={t('Enable calling', 'Aramayı etkinleştir')}
+                    body={t('Enables WhatsApp Calling API on the phone number after signup. This allows inbound and outbound voice calls. You can also toggle calling per phone from the inbox.', 'Kayıttan sonra numarada WhatsApp Arama API’sini etkinleştirir; gelen ve giden sesli aramalara izin verir. Gelen kutusundan numara bazında da açıp kapatabilirsiniz.')}
                   />
                 }
               />
@@ -985,16 +995,16 @@ export default function ClientDashboard({
         {/* Right column */}
         <div className="space-y-5">
           <div className="sticky top-20 space-y-5">
-            <SectionCard icon={<Rocket className="w-4 h-4" />} title="Launch" subtitle="Start the Embedded Signup flow">
+            <SectionCard icon={<Rocket className="w-4 h-4" />} title={t('Launch', 'Başlat')} subtitle={t('Start the Embedded Signup flow', 'Embedded Signup akışını başlatın')}>
               <div className="bg-gray-50 border border-gray-100 rounded-lg p-3 mb-4 space-y-1.5">
                 <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                  Current Config
+                  {t('Current Config', 'Geçerli Yapılandırma')}
                 </div>
                 {[
-                  { label: 'Config ID', value: esOptionConfig },
-                  { label: 'Version', value: esOptionVersion },
-                  { label: 'Feature Type', value: esOptionFeatureType || 'None' },
-                  { label: 'Register number', value: esOptionReg ? 'On' : 'Off' },
+                  { label: t('Config ID', 'Yapılandırma ID'), value: esOptionConfig },
+                  { label: t('Version', 'Sürüm'), value: esOptionVersion },
+                  { label: t('Feature Type', 'Özellik Türü'), value: esOptionFeatureType || t('None', 'Yok') },
+                  { label: t('Register number', 'Numarayı kaydet'), value: esOptionReg ? t('On', 'Açık') : t('Off', 'Kapalı') },
                 ].map(({ label, value }) => (
                   <div key={label} className="flex items-center justify-between text-[12px]">
                     <span className="text-gray-500">{label}</span>
@@ -1016,21 +1026,21 @@ export default function ClientDashboard({
               />
               {/* Facebook Login for Business settings reminder */}
               <p className="mt-2 text-[11px] text-gray-400 leading-relaxed">
-                <span className="text-gray-500">Before launching, add your domain in </span>
+                <span className="text-gray-500">{t('Before launching, add your domain in ', 'Başlatmadan önce alan adınızı şuraya ekleyin: ')}</span>
                 <a
                   href={`https://developers.facebook.com/apps/${appId}/business-login/settings/`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-400 hover:text-blue-500 transition-colors"
                 >
-                  Facebook Login for Business → Settings
+                  {t('Facebook Login for Business → Settings', 'Facebook Login for Business → Ayarlar')}
                 </a>
                 {' '}
                 <RichTip content={
                   <div className="px-4 py-3 space-y-2">
-                    <p className="text-[12px] font-semibold text-gray-800">What to add in Settings</p>
-                    <p className="text-[11px] text-gray-500"><span className="font-medium text-gray-700">Valid OAuth Redirect URIs</span> &mdash; your app&apos;s domain</p>
-                    <p className="text-[11px] text-gray-500"><span className="font-medium text-gray-700">Allowed Domains for the JavaScript SDK</span> &mdash; your app&apos;s domain</p>
+                    <p className="text-[12px] font-semibold text-gray-800">{t('What to add in Settings', 'Ayarlara eklenecekler')}</p>
+                    <p className="text-[11px] text-gray-500"><span className="font-medium text-gray-700">Valid OAuth Redirect URIs</span> &mdash; {t("your app's domain", 'uygulamanızın alan adı')}</p>
+                    <p className="text-[11px] text-gray-500"><span className="font-medium text-gray-700">Allowed Domains for the JavaScript SDK</span> &mdash; {t("your app's domain", 'uygulamanızın alan adı')}</p>
                   </div>
                 }>
                   <HelpCircle className="inline w-3 h-3 text-gray-400 cursor-help" />
@@ -1038,11 +1048,11 @@ export default function ClientDashboard({
               </p>
             </SectionCard>
 
-            <SectionCard icon={<Code2 className="w-4 h-4" />} title="Response" subtitle="Results from the signup flow">
+            <SectionCard icon={<Code2 className="w-4 h-4" />} title={t('Response', 'Yanıt')} subtitle={t('Results from the signup flow', 'Kayıt akışının sonuçları')}>
               {lastEventData ? (
                 <div>
                   <div className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-2">
-                    Session Event
+                    {t('Session Event', 'Oturum Olayı')}
                   </div>
                   <div className="bg-gray-50 rounded-lg p-3 overflow-auto max-h-48 border border-gray-200">
                     <pre className="text-[11px] text-gray-700 font-mono whitespace-pre-wrap leading-relaxed">
@@ -1053,8 +1063,8 @@ export default function ClientDashboard({
               ) : (
                 <div className="border border-dashed border-gray-200 rounded-xl py-8 text-center">
                   <Circle className="w-8 h-8 text-gray-200 mx-auto mb-2" />
-                  <p className="text-[13px] text-gray-400 font-medium">No response yet</p>
-                  <p className="text-[11px] text-gray-300 mt-0.5">Results appear here after launching</p>
+                  <p className="text-[13px] text-gray-400 font-medium">{t('No response yet', 'Henüz yanıt yok')}</p>
+                  <p className="text-[11px] text-gray-300 mt-0.5">{t('Results appear here after launching', 'Başlattıktan sonra sonuçlar burada görünür')}</p>
                 </div>
               )}
               <div className="flex justify-end mt-4 pt-3 border-t border-gray-100">
@@ -1064,7 +1074,7 @@ export default function ClientDashboard({
                   rel="noopener noreferrer"
                   className="flex items-center gap-1 text-[11px] text-gray-400 hover:text-blue-600 transition-colors"
                 >
-                  <ExternalLink className="w-3 h-3" /> Session Events
+                  <ExternalLink className="w-3 h-3" /> {t('Session Events', 'Oturum Olayları')}
                 </a>
               </div>
             </SectionCard>

@@ -13,19 +13,20 @@ export function formatDuration(seconds: number): string {
 }
 
 /**
- * Format remaining time until expiration as "Xd Xh Xm" string.
+ * Format remaining time until expiration as "Xd Xh Xm" string ("Xg Xsa Xdk" in Turkish).
  */
-export function formatTimeRemaining(expirationTime: number): string {
+export function formatTimeRemaining(expirationTime: number, locale: 'en' | 'tr' = 'en'): string {
   const now = Date.now();
   const diff = expirationTime - now;
-  if (diff <= 0) return 'expired';
+  if (diff <= 0) return locale === 'tr' ? 'süresi doldu' : 'expired';
+  const [d, h, m] = locale === 'tr' ? ['g', 'sa', 'dk'] : ['d', 'h', 'm'];
   const totalMinutes = Math.floor(diff / 60000);
   const days = Math.floor(totalMinutes / 1440);
   const hours = Math.floor((totalMinutes % 1440) / 60);
   const minutes = totalMinutes % 60;
-  if (days > 0) return `${days}d ${hours}h ${minutes}m`;
-  if (hours > 0) return `${hours}h ${minutes}m`;
-  return `${minutes}m`;
+  if (days > 0) return `${days}${d} ${hours}${h} ${minutes}${m}`;
+  if (hours > 0) return `${hours}${h} ${minutes}${m}`;
+  return `${minutes}${m}`;
 }
 
 /**
@@ -33,16 +34,23 @@ export function formatTimeRemaining(expirationTime: number): string {
  */
 export function formatRemainingRequests(
   actions: { action_name: string; can_perform_action: boolean; limits?: { time_period: string; max_allowed: number; current_usage: number }[] }[],
+  locale: 'en' | 'tr' = 'en',
 ): string | undefined {
   const sendAction = actions?.find(a => a.action_name === 'send_call_permission_request');
   if (!sendAction?.limits?.length) return undefined;
   const limits = sendAction.limits.map(l => {
     const remaining = l.max_allowed - l.current_usage;
-    const period = l.time_period === 'PT24H' ? 'today' : l.time_period === 'P7D' ? 'this week' : l.time_period;
+    const period =
+      l.time_period === 'PT24H'
+        ? locale === 'tr' ? 'bugün' : 'today'
+        : l.time_period === 'P7D'
+          ? locale === 'tr' ? 'bu hafta' : 'this week'
+          : l.time_period;
     return { remaining, period };
   });
   const mostRestrictive = limits.reduce((min, l) => l.remaining < min.remaining ? l : min);
   if (mostRestrictive.remaining <= 0) return undefined;
+  if (locale === 'tr') return `${mostRestrictive.period} ${mostRestrictive.remaining} istek hakkı kaldı`;
   return `${mostRestrictive.remaining} request${mostRestrictive.remaining !== 1 ? 's' : ''} left ${mostRestrictive.period}`;
 }
 

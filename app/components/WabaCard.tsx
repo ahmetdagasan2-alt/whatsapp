@@ -5,13 +5,16 @@
 
 import { ExternalLink, Building2 } from 'lucide-react';
 
+import { getT } from '@/app/i18n/server';
+
 interface WabaCardProps {
   id: string;
   name: string;
   businessId: string;
 }
 
-export default function WabaCard({ id, name, businessId }: WabaCardProps) {
+export default async function WabaCard({ id, name, businessId }: WabaCardProps) {
+  const t = await getT();
   const businessSettingsUrl = `https://business.facebook.com/latest/settings/whatsapp_account?business_id=${businessId}&selected_asset_id=${id}&selected_asset_type=whatsapp-business-account`;
   const whatsAppManagerUrl = `https://business.facebook.com/latest/whatsapp_manager/phone_numbers/?business_id=${businessId}&tab=phone-numbers&nav_ref=whatsapp_manager&asset_id=${id}`;
 
@@ -23,7 +26,7 @@ export default function WabaCard({ id, name, businessId }: WabaCardProps) {
         </div>
         <div className="min-w-0">
           <h3 className="text-sm font-semibold text-gray-900 truncate">{name}</h3>
-          {name !== 'İsimsiz WABA' && <p className="text-xs text-gray-500 mt-0.5 font-mono">ID: {id}</p>}
+          {name !== t('Unnamed WABA', 'İsimsiz WABA') && <p className="text-xs text-gray-500 mt-0.5 font-mono">ID: {id}</p>}
         </div>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0 ml-4">
@@ -34,7 +37,7 @@ export default function WabaCard({ id, name, businessId }: WabaCardProps) {
           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-colors"
         >
           <ExternalLink className="w-3 h-3" />
-          İşletme Ayarları
+          {t('Business Settings', 'İşletme Ayarları')}
         </a>
         <a
           href={whatsAppManagerUrl}

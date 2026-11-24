@@ -5,7 +5,9 @@
 
 'use client';
 
-import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { Component, type ContextType, type ErrorInfo, type ReactNode } from 'react';
+
+import { LocaleContext } from '@/app/i18n/client';
 
 interface Props {
   children: ReactNode;
@@ -17,6 +19,9 @@ interface State {
 }
 
 export default class ErrorBoundary extends Component<Props, State> {
+  static contextType = LocaleContext;
+  declare context: ContextType<typeof LocaleContext>;
+
   public state: State = {
     hasError: false,
     error: null,
@@ -32,6 +37,7 @@ export default class ErrorBoundary extends Component<Props, State> {
 
   public render() {
     if (this.state.hasError) {
+      const { t } = this.context;
       return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-red-50 to-orange-50 flex items-center justify-center p-4">
           <div className="max-w-lg w-full">
@@ -56,10 +62,12 @@ export default class ErrorBoundary extends Component<Props, State> {
 
                 {/* Message */}
                 <div className="text-center mb-6">
-                  <h1 className="text-xl font-bold text-gray-900 mb-2">Something went wrong</h1>
+                  <h1 className="text-xl font-bold text-gray-900 mb-2">{t('Something went wrong', 'Bir şeyler ters gitti')}</h1>
                   <p className="text-sm text-gray-500 leading-relaxed">
-                    An unexpected error occurred. Try refreshing the page. If the problem persists, check the browser
-                    console for details.
+                    {t(
+                      'An unexpected error occurred. Try refreshing the page. If the problem persists, check the browser console for details.',
+                      'Beklenmeyen bir hata oluştu. Sayfayı yenilemeyi deneyin. Sorun devam ederse lütfen Dekatre destek ekibiyle iletişime geçin.',
+                    )}
                   </p>
                 </div>
 
@@ -75,9 +83,9 @@ export default class ErrorBoundary extends Component<Props, State> {
                 {/* Actions */}
                 <button
                   onClick={() => window.location.reload()}
-                  className="w-full px-6 py-3 bg-gray-900 text-white font-semibold rounded-xl hover:bg-gray-800 active:bg-gray-950 transition-colors shadow-sm"
+                  className="w-full px-6 py-3 bg-brand-600 text-white font-semibold rounded-xl hover:bg-brand-700 active:bg-brand-800 transition-colors shadow-sm"
                 >
-                  Refresh Page
+                  {t('Refresh Page', 'Sayfayı Yenile')}
                 </button>
               </div>
             </div>

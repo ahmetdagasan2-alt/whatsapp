@@ -5,13 +5,16 @@
 
 import { ExternalLink, FileText } from 'lucide-react';
 
+import { getT } from '@/app/i18n/server';
+
 interface PageCardProps {
   id: string;
   name: string;
   businessId: string;
 }
 
-export default function PageCard({ id, name }: PageCardProps) {
+export default async function PageCard({ id, name }: PageCardProps) {
+  const t = await getT();
   const pageUrl = `https://www.facebook.com/${id}`;
 
   return (
@@ -33,7 +36,7 @@ export default function PageCard({ id, name }: PageCardProps) {
           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-600 text-white text-xs font-medium rounded-lg hover:bg-brand-700 transition-colors"
         >
           <ExternalLink className="w-3 h-3" />
-          Sayfayı Aç
+          {t('View Page', 'Sayfayı Aç')}
         </a>
       </div>
     </div>
