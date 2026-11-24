@@ -5,24 +5,17 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 
-import { auth0 } from '@/lib/auth0';
-
-export async function middleware(request: NextRequest) {
-  // Bypass Auth0 for local development only
-  if (process.env.BYPASS_AUTH === 'true' && process.env.NODE_ENV === 'development') {
-    return NextResponse.next();
+// Pages check the session themselves (lib/auth.ts). This only keeps the old
+// Auth0 URLs working for bookmarks and links that still point at them.
+export function middleware(request: NextRequest) {
+  const { pathname, search } = request.nextUrl;
+  if (pathname === '/auth/logout') {
+    return NextResponse.redirect(new URL('/api/auth/logout', request.url));
   }
-  return await auth0.middleware(request);
+  const signup = new URLSearchParams(search).get('screen_hint') === 'signup';
+  return NextResponse.redirect(new URL(signup ? '/signup' : '/login', request.url));
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico, sitemap.xml, robots.txt (metadata files)
-     */
-    '/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)',
-  ],
+  matcher: ['/auth/:path*'],
 };

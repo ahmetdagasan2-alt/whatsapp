@@ -19,10 +19,10 @@ const ENV_VAR_GROUPS: { label: string; color: string; textColor: string; keys: s
     keys: ['FB_APP_ID', 'FB_APP_SECRET', 'FB_GRAPH_API_VERSION', 'FB_REG_PIN', 'FB_VERIFY_TOKEN'],
   },
   {
-    label: 'Auth0 Authentication',
+    label: 'Authentication',
     color: 'bg-orange-500',
     textColor: 'text-white',
-    keys: ['APP_BASE_URL', 'AUTH0_DOMAIN', 'AUTH0_SECRET', 'AUTH0_CLIENT_ID', 'AUTH0_CLIENT_SECRET'],
+    keys: ['SESSION_SECRET'],
   },
   {
     label: 'Database & Services',
@@ -39,11 +39,7 @@ const FRIENDLY_DESCRIPTIONS: { [key: string]: string } = {
   FB_GRAPH_API_VERSION: 'Facebook Graph API version to use (e.g., v19.0)',
   FB_REG_PIN: 'Facebook Registration PIN',
   FB_VERIFY_TOKEN: 'Facebook Webhook Verify Token',
-  APP_BASE_URL: 'Base URL of the application (e.g., http://localhost:3000)',
-  AUTH0_DOMAIN: 'Auth0 domain (e.g., your-tenant.auth0.com)',
-  AUTH0_SECRET: 'Auth0 secret for session encryption',
-  AUTH0_CLIENT_ID: 'Auth0 client ID',
-  AUTH0_CLIENT_SECRET: 'Auth0 client secret',
+  SESSION_SECRET: 'Random string (32+ characters) used to sign login sessions',
   POSTGRES_URL: 'PostgreSQL connection URL (auto-configured on Vercel)',
   ABLY_KEY: 'Ably API key for real-time messaging',
   TP_CONTACT_EMAIL: 'Contact email displayed in the application',
@@ -204,6 +200,7 @@ export default function MissingEnvVars({ missingVars }: MissingEnvVarsProps) {
           <span className="text-gray-500">Developer Environment</span>
         </div>
         <div className="flex items-center gap-3">
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- route handler: clears the session cookie, then redirects */}
           <a
             href="/api/auth/logout"
             className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900 transition-colors"

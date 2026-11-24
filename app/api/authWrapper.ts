@@ -5,7 +5,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { auth0 } from '@/lib/auth0';
+import { auth } from '@/lib/auth';
 
 export interface AuthSession {
   user: {
@@ -20,7 +20,7 @@ type ApiHandler = (request: NextRequest, session: AuthSession) => Promise<NextRe
 export function withAuth(handler: ApiHandler) {
   return async (request: NextRequest): Promise<NextResponse> => {
     try {
-      const session = await auth0.getSession();
+      const session = await auth.getSession();
 
       if (!session || !session.user) {
         return NextResponse.json({ error: 'Unauthorized', message: 'Authentication required' }, { status: 401 });

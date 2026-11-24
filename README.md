@@ -11,7 +11,7 @@ A [Next.js](https://nextjs.org/) reference application that demonstrates how tec
 
 ## Demo
 
-**New to this app?** Watch the step-by-step video walkthrough that covers everything you need to get up and running — creating accounts (Vercel, Auth0, Ably), deploying the app, setting up the Meta Developer app, and configuring the database.
+**New to this app?** Watch the step-by-step video walkthrough that covers everything you need to get up and running — creating accounts (Vercel, Ably), deploying the app, setting up the Meta Developer app, and configuring the database.
 
 **[Watch the Setup Demo](https://github.com/fbsamples/business-messaging-sample-tech-provider-app/releases/tag/demo)**
 
@@ -25,7 +25,7 @@ A [Next.js](https://nextjs.org/) reference application that demonstrates how tec
   - [Option B: Local Development](#option-b-local-development)
 - [Configuration](#configuration)
   - [1. Ably](#1-ably-real-time-messaging)
-  - [2. Auth0](#2-auth0-authentication)
+  - [2. Authentication](#2-authentication-built-in)
   - [3. Meta Developer App](#3-meta-developer-app)
   - [4. Database Setup](#4-database-setup)
 - [Environment Variables](#environment-variables)
@@ -42,7 +42,7 @@ A [Next.js](https://nextjs.org/) reference application that demonstrates how tec
 - **Template Messaging** — Send pre-approved template messages (paid messaging)
 - **Webhook Viewer** — Debug tool showing all incoming webhook payloads
 - **Asset Management** — View shared Pages, Ad Accounts, Datasets, Catalogs, and Instagram Accounts
-- **Authentication** — Secure login via Auth0
+- **Authentication** — Built-in email + password accounts stored in Postgres, phone verified with a WhatsApp code
 
 ## Tech Stack
 
@@ -51,7 +51,7 @@ A [Next.js](https://nextjs.org/) reference application that demonstrates how tec
 | Framework | [Next.js 15](https://nextjs.org/) (App Router) with [React 19](https://react.dev/) |
 | Language | [TypeScript](https://www.typescriptlang.org/) |
 | Styling | [Tailwind CSS 4](https://tailwindcss.com/) |
-| Auth | [Auth0](https://auth0.com/) (`@auth0/nextjs-auth0` v4) |
+| Auth | Built-in (scrypt password hashes, signed session cookie, WhatsApp OTP) |
 | Database | [Vercel Postgres](https://vercel.com/docs/storage/vercel-postgres) (Neon) |
 | Real-time | [Ably](https://ably.com/) (WebSocket-based live updates) |
 | Deployment | [Vercel](https://vercel.com/) |
@@ -62,7 +62,6 @@ Before you begin, make sure you have:
 
 - **Node.js 18.18+** (required by Next.js 15)
 - An [Ably](https://ably.com/) account and app
-- An [Auth0](https://auth0.com/) account and application
 - A [Meta Developer](https://developers.facebook.com/) account
 - A **verified Meta Business** — your business must have completed [Business Verification](https://developers.facebook.com/docs/development/release/business-verification). You will need to select this verified business when connecting your app.
 
@@ -78,7 +77,7 @@ Choose one of the two paths below:
 
 Click the button below to deploy to a new Vercel project. The flow will prompt you to fork the repo, connect a Neon Postgres database, and set environment variables.
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Ffbsamples%2Fbusiness-messaging-sample-tech-provider-app&env=ABLY_KEY,APP_BASE_URL,AUTH0_DOMAIN,AUTH0_CLIENT_ID,AUTH0_CLIENT_SECRET,AUTH0_SECRET,FB_APP_ID,FB_APP_SECRET,FB_GRAPH_API_VERSION,FB_REG_PIN,FB_VERIFY_TOKEN,TP_CONTACT_EMAIL,PRIVACY_POLICY_URL,PRIVACY_POLICY_HTML&envDescription=PRIVACY_POLICY_URL%20and%20PRIVACY_POLICY_HTML%20are%20optional.%20You%20may%20provide%20either%20one%20or%20enter%20None%20for%20both.%20See%20the%20README%20for%20detailed%20descriptions%20of%20the%20variables%20to%20configure%20the%20app.&envLink=https%3A%2F%2Fgithub.com%2Ffbsamples%2Fbusiness-messaging-sample-tech-provider-app%23environment-variables&products=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22neon%22%2C%22productSlug%22%3A%22neon%22%2C%22protocol%22%3A%22storage%22%2C%22group%22%3A%22postgres%22%7D%5D)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Ffbsamples%2Fbusiness-messaging-sample-tech-provider-app&env=ABLY_KEY,SESSION_SECRET,FB_APP_ID,FB_APP_SECRET,FB_GRAPH_API_VERSION,FB_REG_PIN,FB_VERIFY_TOKEN,TP_CONTACT_EMAIL,PRIVACY_POLICY_URL,PRIVACY_POLICY_HTML&envDescription=PRIVACY_POLICY_URL%20and%20PRIVACY_POLICY_HTML%20are%20optional.%20You%20may%20provide%20either%20one%20or%20enter%20None%20for%20both.%20See%20the%20README%20for%20detailed%20descriptions%20of%20the%20variables%20to%20configure%20the%20app.&envLink=https%3A%2F%2Fgithub.com%2Ffbsamples%2Fbusiness-messaging-sample-tech-provider-app%23environment-variables&products=%5B%7B%22type%22%3A%22integration%22%2C%22integrationSlug%22%3A%22neon%22%2C%22productSlug%22%3A%22neon%22%2C%22protocol%22%3A%22storage%22%2C%22group%22%3A%22postgres%22%7D%5D)
 
 **Step 2 — Set up the database**
 
@@ -86,7 +85,7 @@ Once deployed, open the Neon dashboard for your project and run the SQL in the [
 
 **Step 3 — Configure external services**
 
-Follow the [Configuration](#configuration) section to set up Ably, Auth0, and your Meta app.
+Follow the [Configuration](#configuration) section to set up Ably, authentication, and your Meta app.
 
 ---
 
@@ -135,18 +134,17 @@ Ably provides real-time WebSocket connections for streaming incoming messages an
 
 See the [Ably documentation](https://ably.com/docs) for more details.
 
-### 2. Auth0 (Authentication)
+### 2. Authentication (built-in)
 
-Auth0 handles user authentication.
+Users sign up at `/signup` with first name, last name, email, phone number (any country) and a password, and log in at `/login` with email + password. Accounts live in the `users` table; pending verification codes in `auth_otps`. Both tables are created automatically on first use.
 
-1. Create an account at [auth0.com](https://auth0.com/)
-2. Create a new **Regular Web Application**
-3. In the application settings, configure:
-   - **Allowed Callback URLs**: `https://your-app.vercel.app/auth/callback`
-   - **Allowed Logout URLs**: `https://your-app.vercel.app`
-4. Copy the **Domain**, **Client ID**, and **Client Secret** into your environment variables
+1. Set `SESSION_SECRET` to a random string of at least 32 characters (`openssl rand -hex 32`). It signs the session cookie.
+2. Phone numbers are verified — and forgotten passwords reset — with a 6-digit code sent over WhatsApp from your own business number:
+   - In WhatsApp Manager, create a message template with category **Authentication** and a **Copy code** button, and wait for it to be approved.
+   - Set `WA_OTP_PHONE_NUMBER_ID` (the sending phone number ID), `WA_OTP_ACCESS_TOKEN` (a system user token with `whatsapp_business_messaging`), `WA_OTP_TEMPLATE_NAME` and, if it is not Turkish, `WA_OTP_TEMPLATE_LANGUAGE`.
+   - Until these are set, signup shows "phone verification is not set up yet". In local development (`npm run dev`) the code is printed to the server console instead.
 
-See the [Auth0 Next.js Quickstart](https://auth0.com/docs/quickstart/webapp/nextjs/01-login) for a full walkthrough.
+All app data is keyed by the user's email, so accounts created before the switch from Auth0 keep their data when the user signs up again with the same email.
 
 ### 3. Meta Developer App
 
@@ -325,12 +323,14 @@ CREATE TABLE IF NOT EXISTS sap_dispatch_log (
 Set these in `.env.local` for local development or in your Vercel project settings for production.
 
 ```env
-# Auth0
-APP_BASE_URL='https://your-deployment-url.vercel.app'
-AUTH0_DOMAIN='your-tenant.auth0.com'
-AUTH0_CLIENT_ID='your-auth0-client-id'
-AUTH0_CLIENT_SECRET='your-auth0-client-secret'
-AUTH0_SECRET='a-long-random-string-for-session-encryption'
+# Authentication
+SESSION_SECRET='a-long-random-string-for-session-signing'
+
+# WhatsApp verification codes (signup + password reset)
+WA_OTP_PHONE_NUMBER_ID='sending-phone-number-id'
+WA_OTP_ACCESS_TOKEN='system-user-access-token'
+WA_OTP_TEMPLATE_NAME='your_authentication_template'
+# WA_OTP_TEMPLATE_LANGUAGE='tr'
 
 # Meta / Facebook
 FB_APP_ID='your-facebook-app-id'
@@ -358,11 +358,11 @@ TP_CONTACT_EMAIL='your-contact-email@example.com'
 
 | Variable | Description |
 |----------|-------------|
-| `APP_BASE_URL` | Your deployment URL (e.g. `https://your-app.vercel.app`). Used by Auth0 for redirects. |
-| `AUTH0_DOMAIN` | Your Auth0 tenant domain (e.g. `your-tenant.auth0.com`). |
-| `AUTH0_CLIENT_ID` | Auth0 application client ID. |
-| `AUTH0_CLIENT_SECRET` | Auth0 application client secret. |
-| `AUTH0_SECRET` | A long random string used to encrypt Auth0 session cookies. Generate with `openssl rand -hex 32`. |
+| `SESSION_SECRET` | Random string (32+ characters) that signs login session cookies. Generate with `openssl rand -hex 32`. An existing `AUTH0_SECRET` is accepted as a fallback. |
+| `WA_OTP_PHONE_NUMBER_ID` | WhatsApp phone number ID that sends signup / password-reset codes. |
+| `WA_OTP_ACCESS_TOKEN` | Access token allowed to send messages from that number. |
+| `WA_OTP_TEMPLATE_NAME` | Name of the approved **Authentication** template (with a copy-code button). |
+| `WA_OTP_TEMPLATE_LANGUAGE` | _Optional._ Template language code; defaults to `tr`. |
 | `FB_APP_ID` | Your Meta app ID from the [Meta Developer Dashboard](https://developers.facebook.com/apps/). |
 | `FB_APP_SECRET` | Your Meta app secret (App Settings > Basic). |
 | `FB_GRAPH_API_VERSION` | Graph API version to use (e.g. `v22.0`). |
@@ -411,8 +411,9 @@ app/
   paid_messaging/         # Template messaging page
   ...
 lib/
-  auth0.ts                # Auth0 client initialization
-middleware.ts             # Auth0 middleware (protects all routes)
+  auth.ts                 # getSession() used by pages and API routes
+  auth/                   # Password hashing, sessions, phone validation, WhatsApp OTP, signup/login flows
+middleware.ts             # Redirects legacy /auth/* URLs
 ```
 
 ## Contributing

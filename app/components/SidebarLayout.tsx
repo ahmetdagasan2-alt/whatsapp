@@ -171,8 +171,9 @@ function UserMenu({ userId }: { userId: string }) {
           </div>
 
           <div className="border-t border-slate-100 py-1.5">
+            {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- route handler: clears the session cookie, then redirects */}
             <a
-              href="/auth/logout"
+              href="/api/auth/logout"
               role="menuitem"
               className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50"
             >

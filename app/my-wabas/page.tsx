@@ -5,7 +5,7 @@
 
 import { Building2 } from 'lucide-react';
 
-import { auth0 } from '@/lib/auth0';
+import { auth } from '@/lib/auth';
 import { getWabas, getAppDetails } from '@/app/api/beUtils';
 import type { WabaWithDetails } from '@/app/types/api';
 import LoggedOut from '@/app/components/LoggedOut';
@@ -15,7 +15,7 @@ import publicConfig from '@/app/publicConfig';
 import { getT } from '@/app/i18n/server';
 
 export default async function MyWabas() {
-  const session = await auth0.getSession();
+  const session = await auth.getSession();
   if (!session) return <LoggedOut />;
 
   const userId = session.user.email;

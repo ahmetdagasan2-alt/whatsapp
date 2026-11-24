@@ -8,13 +8,13 @@ import SidebarLayout from '@/app/components/SidebarLayout';
 import LoggedOut from '@/app/components/LoggedOut';
 import publicConfig from '@/app/publicConfig';
 import { getAppDetails } from '@/app/api/beUtils';
-import { auth0 } from '@/lib/auth0';
+import { auth } from '@/lib/auth';
 
 const { appId, publicEsVersions } = publicConfig;
 
 export default async function Home() {
   // Fetch the user session
-  const session = await auth0.getSession();
+  const session = await auth.getSession();
 
   // If no session, show the logged out component
   if (!session) {

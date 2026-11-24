@@ -21,12 +21,8 @@ export const ENV_VAR_DESCRIPTIONS: { [key: string]: string } = {
   FB_REG_PIN: 'Facebook Registration PIN (private)',
   FB_VERIFY_TOKEN: 'Facebook Webhook Verify Token (private)',
 
-  // Auth0 Configuration
-  APP_BASE_URL: 'Base URL of the application (e.g., http://localhost:3000)',
-  AUTH0_DOMAIN: 'Auth0 domain (e.g., your-tenant.auth0.com)',
-  AUTH0_SECRET: 'Auth0 secret for session encryption',
-  AUTH0_CLIENT_ID: 'Auth0 client ID',
-  AUTH0_CLIENT_SECRET: 'Auth0 client secret',
+  // Authentication
+  SESSION_SECRET: 'Random string (32+ characters) used to sign login sessions',
 
   // Database Configuration
   // Auto configured if you use Vercel to connect your DB
@@ -39,9 +35,14 @@ export const ENV_VAR_DESCRIPTIONS: { [key: string]: string } = {
   TP_CONTACT_EMAIL: 'Contact email for the application',
 };
 
+// Older deployments configured AUTH0_SECRET; it is still accepted as the session secret.
+const ENV_VAR_FALLBACKS: { [key: string]: string } = {
+  SESSION_SECRET: 'AUTH0_SECRET',
+};
+
 export function getMissingEnvVars(): MissingEnvVarInfo[] {
   return Object.entries(ENV_VAR_DESCRIPTIONS)
-    .filter(([key]) => !process.env[key]?.trim())
+    .filter(([key]) => !process.env[key]?.trim() && !process.env[ENV_VAR_FALLBACKS[key] ?? '']?.trim())
     .map(([key]) => ({
       name: key,
       description: ENV_VAR_DESCRIPTIONS[key] || 'No description available',

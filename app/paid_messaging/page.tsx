@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-import { auth0 } from '@/lib/auth0';
+import { auth } from '@/lib/auth';
 import { getWabas, getAppDetails } from '@/app/api/beUtils';
 import type { WabaClientData } from '@/app/types/api';
 import LoggedOut from '@/app/components/LoggedOut';
@@ -14,7 +14,7 @@ import { getT } from '@/app/i18n/server';
 import { Mail } from 'lucide-react';
 
 export default async function PaidMessaging() {
-  const session = await auth0.getSession();
+  const session = await auth.getSession();
   if (!session) return <LoggedOut />;
 
   const userId = session.user.email;

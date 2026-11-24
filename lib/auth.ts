@@ -3,14 +3,13 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-import { Auth0Client } from '@auth0/nextjs-auth0/server';
+import { cookies } from 'next/headers';
 
-const _auth0 = new Auth0Client();
+import { SESSION_COOKIE, verifySessionToken, type Session } from '@/lib/auth/session';
 
 const bypassAuth = process.env.BYPASS_AUTH === 'true' && process.env.NODE_ENV === 'development';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- mock session for local dev bypass
-const mockSession: any = {
+const mockSession: Session = {
   user: {
     email: process.env.TP_CONTACT_EMAIL ?? 'dev@localhost',
     name: 'Local Dev User',
@@ -18,10 +17,10 @@ const mockSession: any = {
   },
 };
 
-export const auth0 = bypassAuth
-  ? {
-      ..._auth0,
-      getSession: async () => mockSession,
-      middleware: _auth0.middleware.bind(_auth0),
-    }
-  : _auth0;
+async function getSession(): Promise<Session | null> {
+  if (bypassAuth) return mockSession;
+  const store = await cookies();
+  return verifySessionToken(store.get(SESSION_COOKIE)?.value);
+}
+
+export const auth = { getSession };

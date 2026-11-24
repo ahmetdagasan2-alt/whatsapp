@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-import { auth0 } from '@/lib/auth0';
+import { auth } from '@/lib/auth';
 import SidebarLayout from '@/app/components/SidebarLayout';
 import LoggedOut from '@/app/components/LoggedOut';
 import publicConfig from '@/app/publicConfig';
@@ -11,7 +11,7 @@ import { getAppDetails, getClientPhones } from '@/app/api/beUtils';
 import InboxLayout from '@/app/components/InboxLayout';
 
 export default async function Home() {
-  const session = await auth0.getSession();
+  const session = await auth.getSession();
 
   if (!session) {
     return <LoggedOut />;

@@ -5,7 +5,7 @@
 
 import { Megaphone } from 'lucide-react';
 
-import { auth0 } from '@/lib/auth0';
+import { auth } from '@/lib/auth';
 import { getAdAccounts, getAppDetails } from '@/app/api/beUtils';
 import type { AdAccountWithDetails } from '@/app/types/api';
 import LoggedOut from '@/app/components/LoggedOut';
@@ -15,7 +15,7 @@ import publicConfig from '@/app/publicConfig';
 import { getT } from '@/app/i18n/server';
 
 export default async function MyAdAccounts() {
-  const session = await auth0.getSession();
+  const session = await auth.getSession();
   if (!session) return <LoggedOut />;
 
   const userId = session.user.email;
