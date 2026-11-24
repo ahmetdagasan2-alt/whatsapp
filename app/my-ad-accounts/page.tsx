@@ -23,21 +23,21 @@ export default async function MyAdAccounts() {
 
   return (
     <WabaPageLayout
-      title="My Ad Accounts"
-      description="Facebook Ad Accounts connected to your app."
+      title="Reklam Hesapları"
+      description="Uygulamanıza bağlı Facebook reklam hesapları."
       userId={userId}
       logoUrl={appDetails.logo_url}
       appName={appDetails.name}
       isEmpty={adAccounts.length === 0}
-      emptyMessage="No ad accounts found."
-      emptyDescription="Ad accounts will appear here once they are connected through the Embedded Signup flow."
+      emptyMessage="Henüz reklam hesabı yok."
+      emptyDescription="Kurulum ekranından hesap bağladığınızda reklam hesaplarınız burada görünecek."
       icon={<Megaphone className="w-10 h-10" />}
     >
       {adAccounts.map((account: AdAccountWithDetails) => (
         <AdAccountCard
           key={account.ad_account_id}
           adAccountId={account.ad_account_id}
-          name={account.name || 'Unnamed Account'}
+          name={account.name || 'İsimsiz hesap'}
           businessId={account.business_id || ''}
         />
       ))}

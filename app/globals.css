@@ -30,6 +30,46 @@
 @plugin '@tailwindcss/typography';
 
 @theme {
+  /* Dekatre Danışmanlık brand palette (from logo: #1E5BC6 → #1AA8E2).
+     The blue and indigo scales are remapped to it so every existing accent
+     in the app picks up the corporate colours. */
+  --color-brand-50: #eef5fe;
+  --color-brand-100: #d9e8fc;
+  --color-brand-200: #bbd6fa;
+  --color-brand-300: #8dbbf6;
+  --color-brand-400: #5797ee;
+  --color-brand-500: #3077e3;
+  --color-brand-600: #1e5bc6;
+  --color-brand-700: #1a4ba3;
+  --color-brand-800: #1b4086;
+  --color-brand-900: #1c386e;
+  --color-brand-950: #13234a;
+  --color-brand-cyan: #1aa8e2;
+
+  --color-blue-50: var(--color-brand-50);
+  --color-blue-100: var(--color-brand-100);
+  --color-blue-200: var(--color-brand-200);
+  --color-blue-300: var(--color-brand-300);
+  --color-blue-400: var(--color-brand-400);
+  --color-blue-500: var(--color-brand-500);
+  --color-blue-600: var(--color-brand-600);
+  --color-blue-700: var(--color-brand-700);
+  --color-blue-800: var(--color-brand-800);
+  --color-blue-900: var(--color-brand-900);
+  --color-blue-950: var(--color-brand-950);
+
+  --color-indigo-50: var(--color-brand-50);
+  --color-indigo-100: var(--color-brand-100);
+  --color-indigo-200: var(--color-brand-200);
+  --color-indigo-300: var(--color-brand-300);
+  --color-indigo-400: var(--color-brand-400);
+  --color-indigo-500: var(--color-brand-500);
+  --color-indigo-600: var(--color-brand-600);
+  --color-indigo-700: var(--color-brand-700);
+  --color-indigo-800: var(--color-brand-800);
+  --color-indigo-900: var(--color-brand-900);
+  --color-indigo-950: var(--color-brand-950);
+
   --background-image-gradient-radial: radial-gradient(var(--tw-gradient-stops));
   --background-image-gradient-conic: conic-gradient(
     from 180deg at 50% 50%,
@@ -68,6 +108,6 @@
 
   body {
     color: rgb(var(--foreground-rgb));
-    background: #f8f9fb;
+    background: #f5f7fb;
   }
 }

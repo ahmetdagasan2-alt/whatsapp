@@ -500,7 +500,7 @@ function Toggle({
         onClick={() => onChange(!checked)}
         className={cn(
           'relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1',
-          checked ? 'bg-[#1877F2]' : 'bg-gray-200',
+          checked ? 'bg-brand-600' : 'bg-gray-200',
         )}
       >
         <span
@@ -534,7 +534,7 @@ function StepIndicator({ current }: { current: Step }) {
               <div
                 className={cn(
                   'w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold transition-all',
-                  done ? 'bg-emerald-500 text-white' : active ? 'bg-[#1877F2] text-white' : 'bg-gray-200 text-gray-400',
+                  done ? 'bg-emerald-500 text-white' : active ? 'bg-brand-600 text-white' : 'bg-gray-200 text-gray-400',
                 )}
               >
                 {done ? <CheckCircle2 className="w-3.5 h-3.5" /> : s.id}
@@ -800,7 +800,7 @@ export default function ClientDashboard({
   };
 
   return (
-    <div className="p-6 w-full">
+    <div className="p-4 md:p-8 w-full max-w-7xl mx-auto">
       {/* Breadcrumb */}
       <div className="flex items-center gap-1.5 text-[12px] text-gray-400 mb-4">
         <a
@@ -808,17 +808,17 @@ export default function ClientDashboard({
           href={`https://developers.facebook.com/apps/${appId}`}
           className="hover:text-gray-700 transition-colors font-mono"
         >
-          App {appId}
+          Uygulama {appId}
         </a>
         <ChevronRight className="w-3 h-3" />
-        <span className="text-gray-600">Configuration</span>
+        <span className="text-gray-600">Kurulum</span>
       </div>
 
       {/* Page title */}
       <div className="mb-5">
-        <h1 className="text-xl font-bold text-slate-700">Payload Builder</h1>
-        <p className="text-[13px] text-gray-500 mt-0.5">
-          Build your Embedded Signup payload. The JSON updates live as you adjust options.
+        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Kurulum</h1>
+        <p className="text-sm text-slate-500 mt-1">
+          İşletme hesaplarını Embedded Signup ile bağlayın. Seçenekleri değiştirdikçe JSON anında güncellenir.
         </p>
       </div>
 
@@ -826,7 +826,7 @@ export default function ClientDashboard({
       <StepIndicator current={step} />
 
       {/* Main grid */}
-      <div className="grid grid-cols-[1fr_320px] gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_320px] gap-6">
         {/* Left column */}
         <div className="space-y-5">
           {/* Payload Builder card */}

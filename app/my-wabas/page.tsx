@@ -23,21 +23,21 @@ export default async function MyWabas() {
 
   return (
     <WabaPageLayout
-      title="My WABAs"
-      description="WhatsApp Business Accounts connected to your app."
+      title="WhatsApp Hesapları"
+      description="Uygulamanıza bağlı WhatsApp Business hesapları (WABA)."
       userId={userId}
       logoUrl={appDetails.logo_url}
       appName={appDetails.name}
       isEmpty={wabas.length === 0}
-      emptyMessage="No WABAs found."
-      emptyDescription="WABAs will appear here once they are connected through the Embedded Signup flow."
+      emptyMessage="Henüz WhatsApp hesabı yok."
+      emptyDescription="Kurulum ekranından hesap bağladığınızda WhatsApp hesaplarınız burada görünecek."
       icon={<Building2 className="w-10 h-10" />}
     >
       {wabas.map((waba: WabaWithDetails, i: number) => (
         <WabaCard
           key={`${waba.id}-${i}`}
           id={waba.id}
-          name={waba.name || 'Unnamed WABA'}
+          name={waba.name || 'İsimsiz WABA'}
           businessId={waba.business_id || ''}
         />
       ))}

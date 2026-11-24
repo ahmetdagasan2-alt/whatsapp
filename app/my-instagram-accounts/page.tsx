@@ -23,21 +23,21 @@ export default async function MyInstagramAccounts() {
 
   return (
     <WabaPageLayout
-      title="My Instagram Accounts"
-      description="Instagram accounts connected to your app."
+      title="Instagram Hesapları"
+      description="Uygulamanıza bağlı Instagram hesapları."
       userId={userId}
       logoUrl={appDetails.logo_url}
       appName={appDetails.name}
       isEmpty={accounts.length === 0}
-      emptyMessage="No Instagram accounts found."
-      emptyDescription="Instagram accounts will appear here once they are connected through the Embedded Signup flow."
+      emptyMessage="Henüz Instagram hesabı yok."
+      emptyDescription="Kurulum ekranından hesap bağladığınızda Instagram hesaplarınız burada görünecek."
       icon={<Instagram className="w-10 h-10" />}
     >
       {accounts.map((account: InstagramAccountWithDetails) => (
         <InstagramAccountCard
           key={account.id}
           id={account.id}
-          name={account.username || 'Unnamed Account'}
+          name={account.username || 'İsimsiz hesap'}
           businessId={account.business_id || ''}
         />
       ))}

@@ -23,21 +23,21 @@ export default async function MyPages() {
 
   return (
     <WabaPageLayout
-      title="My Pages"
-      description="Facebook Pages connected to your app."
+      title="Facebook Sayfaları"
+      description="Uygulamanıza bağlı Facebook sayfaları."
       userId={userId}
       logoUrl={appDetails.logo_url}
       appName={appDetails.name}
       isEmpty={pages.length === 0}
-      emptyMessage="No pages found."
-      emptyDescription="Facebook Pages will appear here once they are connected through the Embedded Signup flow."
+      emptyMessage="Henüz sayfa yok."
+      emptyDescription="Kurulum ekranından hesap bağladığınızda Facebook sayfalarınız burada görünecek."
       icon={<FileText className="w-10 h-10" />}
     >
       {pages.map((page: PageWithDetails) => (
         <PageCard
           key={page.page_id}
           id={page.page_id}
-          name={page.name || 'Unnamed Page'}
+          name={page.name || 'İsimsiz sayfa'}
           businessId={page.business_id || ''}
         />
       ))}

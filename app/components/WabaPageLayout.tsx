@@ -28,22 +28,26 @@ export default function WabaPageLayout({
   title,
   description,
   isEmpty = false,
-  emptyMessage = 'No items found.',
+  emptyMessage = 'Kayıt bulunamadı.',
   emptyDescription,
   icon,
 }: WabaPageLayoutProps) {
   return (
     <SidebarLayout userId={userId} logoUrl={logoUrl} appName={appName}>
-      <div className="p-6">
+      <div className="p-4 md:p-8 max-w-7xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-xl font-bold text-gray-900">{title}</h1>
-          {description && <p className="text-[13px] text-gray-500 mt-0.5">{description}</p>}
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{title}</h1>
+          {description && <p className="text-sm text-slate-500 mt-1">{description}</p>}
         </div>
         {isEmpty ? (
-          <div className="bg-white border border-gray-200 rounded-xl p-12 text-center shadow-sm">
-            {icon && <div className="mb-3 flex justify-center text-gray-300">{icon}</div>}
-            <p className="text-sm font-medium text-gray-600">{emptyMessage}</p>
-            {emptyDescription && <p className="text-xs text-gray-400 mt-1 max-w-sm mx-auto">{emptyDescription}</p>}
+          <div className="bg-white border border-dashed border-gray-300 rounded-2xl p-12 text-center">
+            {icon && (
+              <div className="mb-4 mx-auto w-16 h-16 rounded-2xl bg-brand-50 flex items-center justify-center text-brand-500 [&_svg]:w-8 [&_svg]:h-8">
+                {icon}
+              </div>
+            )}
+            <p className="text-base font-semibold text-slate-700">{emptyMessage}</p>
+            {emptyDescription && <p className="text-sm text-slate-400 mt-1 max-w-sm mx-auto">{emptyDescription}</p>}
           </div>
         ) : (
           <div className="space-y-3">{children}</div>

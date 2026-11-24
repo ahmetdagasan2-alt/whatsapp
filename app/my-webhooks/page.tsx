@@ -22,11 +22,11 @@ export default async function MyWebhooks() {
 
   return (
     <SidebarLayout userId={userId} logoUrl={logoUrl} appName={appName}>
-      <div className="p-6">
+      <div className="p-4 md:p-8 max-w-7xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-xl font-bold text-gray-900">My Webhooks</h1>
-          <p className="text-[13px] text-gray-500 mt-0.5">
-            Real-time debug view of all incoming webhook events for your app.
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Webhook Kayıtları</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Uygulamanıza gelen tüm webhook olaylarının canlı görünümü.
           </p>
         </div>
 

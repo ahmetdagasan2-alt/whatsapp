@@ -23,7 +23,7 @@ export default function WabaCard({ id, name, businessId }: WabaCardProps) {
         </div>
         <div className="min-w-0">
           <h3 className="text-sm font-semibold text-gray-900 truncate">{name}</h3>
-          {name !== 'Unnamed WABA' && <p className="text-xs text-gray-500 mt-0.5 font-mono">ID: {id}</p>}
+          {name !== 'İsimsiz WABA' && <p className="text-xs text-gray-500 mt-0.5 font-mono">ID: {id}</p>}
         </div>
       </div>
       <div className="flex items-center gap-2 flex-shrink-0 ml-4">
@@ -34,13 +34,13 @@ export default function WabaCard({ id, name, businessId }: WabaCardProps) {
           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 text-gray-700 text-xs font-medium rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-colors"
         >
           <ExternalLink className="w-3 h-3" />
-          Business Settings
+          İşletme Ayarları
         </a>
         <a
           href={whatsAppManagerUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#1877F2] text-white text-xs font-medium rounded-lg hover:bg-[#1565C0] transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-600 text-white text-xs font-medium rounded-lg hover:bg-brand-700 transition-colors"
         >
           <ExternalLink className="w-3 h-3" />
           WA Manager

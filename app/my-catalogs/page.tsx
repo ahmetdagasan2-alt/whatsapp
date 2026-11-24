@@ -23,21 +23,21 @@ export default async function MyCatalogs() {
 
   return (
     <WabaPageLayout
-      title="My Catalogs"
-      description="Facebook Catalogs connected to your app."
+      title="Kataloglar"
+      description="Uygulamanıza bağlı Facebook katalogları."
       userId={userId}
       logoUrl={appDetails.logo_url}
       appName={appDetails.name}
       isEmpty={catalogs.length === 0}
-      emptyMessage="No catalogs found."
-      emptyDescription="Catalogs will appear here once they are connected through the Embedded Signup flow."
+      emptyMessage="Henüz katalog yok."
+      emptyDescription="Kurulum ekranından hesap bağladığınızda kataloglarınız burada görünecek."
       icon={<BookOpen className="w-10 h-10" />}
     >
       {catalogs.map((catalog: CatalogWithDetails) => (
         <CatalogCard
           key={catalog.id}
           id={catalog.id}
-          name={catalog.name || 'Unnamed Catalog'}
+          name={catalog.name || 'İsimsiz katalog'}
           businessId={catalog.business_id || ''}
         />
       ))}

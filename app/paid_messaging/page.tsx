@@ -29,11 +29,11 @@ export default async function PaidMessaging() {
 
   return (
     <SidebarLayout userId={userId} logoUrl={appDetails.logo_url} appName={appDetails.name}>
-      <div className="p-6">
+      <div className="p-4 md:p-8 max-w-7xl mx-auto">
         <div className="mb-6">
-          <h1 className="text-xl font-bold text-gray-900">Send Paid Messages</h1>
-          <p className="text-[13px] text-gray-500 mt-0.5">
-            Send paid template messages and Marketing Messages Lite via the WhatsApp Business API
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Ücretli Mesajlar</h1>
+          <p className="text-sm text-slate-500 mt-1">
+            WhatsApp Business API üzerinden şablon mesajları ve pazarlama mesajları (Marketing Messages Lite) gönderin.
           </p>
         </div>
         {wabas.length === 0 ? (
@@ -41,9 +41,9 @@ export default async function PaidMessaging() {
             <div className="mb-3 flex justify-center text-gray-300">
               <Mail className="w-10 h-10" />
             </div>
-            <p className="text-sm font-medium text-gray-600">No WABAs found.</p>
+            <p className="text-sm font-medium text-gray-600">Henüz WhatsApp hesabı yok.</p>
             <p className="text-xs text-gray-400 mt-1 max-w-sm mx-auto">
-              WABAs will appear here once they are connected through the Embedded Signup flow.
+              Kurulum ekranından hesap bağladığınızda WhatsApp hesaplarınız burada görünecek.
             </p>
           </div>
         ) : (

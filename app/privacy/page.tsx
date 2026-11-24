@@ -60,7 +60,7 @@ export default function PrivacyPage() {
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
         </div>
-        <h1 className="text-xl font-bold text-slate-800 mb-2">Privacy Policy</h1>
+        <h1 className="text-xl font-bold text-slate-800 mb-2">Gizlilik Politikası</h1>
         <p className="text-[14px] text-gray-500 leading-relaxed mb-6">
           This is a placeholder page. As the operator of this application, you are responsible for providing your own
           Privacy Policy that complies with applicable laws and Meta&apos;s platform policies.
@@ -87,9 +87,9 @@ export default function PrivacyPage() {
         </div>
         <Link
           href="/"
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-800 text-white text-[13px] font-semibold rounded-full hover:bg-slate-700 transition-colors"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-600 text-white text-[13px] font-semibold rounded-full hover:bg-brand-700 transition-colors"
         >
-          ← Back to app
+          ← Panele dön
         </Link>
       </div>
     </main>

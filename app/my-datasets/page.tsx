@@ -23,21 +23,21 @@ export default async function MyDatasets() {
 
   return (
     <WabaPageLayout
-      title="My Datasets"
-      description="Facebook Datasets (Pixels) connected to your app."
+      title="Veri Kümeleri"
+      description="Uygulamanıza bağlı Facebook veri kümeleri (Pixel)."
       userId={userId}
       logoUrl={appDetails.logo_url}
       appName={appDetails.name}
       isEmpty={datasets.length === 0}
-      emptyMessage="No datasets found."
-      emptyDescription="Datasets will appear here once they are connected through the Embedded Signup flow."
+      emptyMessage="Henüz veri kümesi yok."
+      emptyDescription="Kurulum ekranından hesap bağladığınızda veri kümeleriniz burada görünecek."
       icon={<Database className="w-10 h-10" />}
     >
       {datasets.map((dataset: DatasetWithDetails) => (
         <DatasetCard
           key={dataset.id}
           id={dataset.id}
-          name={dataset.name || 'Unnamed Dataset'}
+          name={dataset.name || 'İsimsiz veri kümesi'}
           businessId={dataset.business_id || ''}
         />
       ))}

@@ -30,10 +30,10 @@ export default function CatalogCard({ id, name, businessId }: CatalogCardProps) 
           href={catalogUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#1877F2] text-white text-xs font-medium rounded-lg hover:bg-[#1565C0] transition-colors"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-600 text-white text-xs font-medium rounded-lg hover:bg-brand-700 transition-colors"
         >
           <ExternalLink className="w-3 h-3" />
-          View Catalog
+          Kataloğu Aç
         </a>
       </div>
     </div>
