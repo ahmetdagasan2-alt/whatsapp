@@ -93,6 +93,9 @@ export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
     callStateRef.current = callState;
   }, [callState]);
 
+  // WhatsApp message IDs (wamid) already shown, to drop redelivered webhooks.
+  const seenMessageIdsRef = useRef<Set<string>>(new Set());
+
   // Ably connection status: 'connecting' | 'connected' | 'disconnected' | 'failed'
   const [ablyState, setAblyState] = useState<string>('connecting');
 
@@ -777,6 +780,13 @@ export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
 
             const text = msgData?.text?.body;
             if (!text) continue;
+
+            // Meta can deliver the same webhook more than once; show each message once.
+            const messageId: string | undefined = msgData?.id;
+            if (messageId) {
+              if (seenMessageIdsRef.current.has(messageId)) continue;
+              seenMessageIdsRef.current.add(messageId);
+            }
 
             const fromField = msgData?.from;
             const isAckBot = fromField === '_ackbot_';

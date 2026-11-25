@@ -18,7 +18,7 @@ vi.mock('@vercel/postgres', () => ({
   },
 }));
 
-import { getAckBotStatus, setAckBotStatus } from '@/app/api/beUtils';
+import { getAckBotStatus, sendWithWabaToken, setAckBotStatus } from '@/app/api/beUtils';
 
 beforeEach(() => {
   db.queries.length = 0;
@@ -56,5 +56,43 @@ describe('setAckBotStatus', () => {
     await setAckBotStatus('1', true, 'a@b.com');
     expect(db.queries).toHaveLength(2);
     expect(db.queries[1]).toMatch(/^INSERT INTO phones/);
+  });
+});
+
+describe('sendWithWabaToken', () => {
+  const fetchMock = vi.fn();
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal('fetch', fetchMock);
+  });
+
+  const graphReply = (body: unknown) => ({ json: async () => body });
+  const usedTokens = () => fetchMock.mock.calls.map(([, init]) => (init.headers as Record<string, string>).Authorization);
+
+  it('falls back to an older token when the newest one is rejected', async () => {
+    db.rows = [
+      { access_token: 'stale', app_id: 'other' },
+      { access_token: 'good', app_id: 'other' },
+    ];
+    fetchMock
+      .mockResolvedValueOnce(graphReply({ error: { code: 190, message: 'Invalid OAuth access token' } }))
+      .mockResolvedValueOnce(graphReply({ messages: [{ id: 'wamid.1' }] }));
+
+    await expect(sendWithWabaToken('waba', 'phone', '905321234567', 'Merhaba')).resolves.toMatchObject({
+      messages: [{ id: 'wamid.1' }],
+    });
+    expect(usedTokens()).toEqual(['Bearer stale', 'Bearer good']);
+  });
+
+  it('does not retry errors that are not about the token', async () => {
+    db.rows = [{ access_token: 'a', app_id: 'x' }, { access_token: 'b', app_id: 'x' }];
+    fetchMock.mockResolvedValue(graphReply({ error: { code: 131047, message: 'Re-engagement message' } }));
+    await expect(sendWithWabaToken('waba', 'phone', '905321234567', 'Merhaba')).rejects.toMatchObject({ code: 131047 });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('fails clearly when no token is stored', async () => {
+    db.rows = [];
+    await expect(sendWithWabaToken('waba', 'phone', '905321234567', 'x')).rejects.toThrow(/No access token/);
   });
 });

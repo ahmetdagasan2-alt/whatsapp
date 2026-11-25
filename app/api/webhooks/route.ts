@@ -7,9 +7,8 @@ import { NextResponse, after, type NextRequest } from 'next/server';
 
 import Ably from 'ably';
 import crypto from 'crypto';
-import { sql } from '@vercel/postgres';
 
-import { getAckBotStatus, getAckBotMessage, send } from '@/app/api/beUtils';
+import { getAckBotStatus, getAckBotMessage, sendWithWabaToken } from '@/app/api/beUtils';
 import { dispatchWebhookToSap } from '@/app/api/sap/sapRouter';
 import privateConfig from '@/app/privateConfig';
 
@@ -111,57 +110,13 @@ export async function POST(request: NextRequest) {
           if (field === 'messages' || !field) {
             const msgData = value?.messages?.[0];
             if (msgData?.type === 'text' && msgData?.text) {
-              const wabaId = entry.id;
-              const { rows }: { rows: { access_token: string }[] } =
-                await sql`SELECT access_token FROM wabas WHERE waba_id = ${wabaId}`;
-              const accessToken = rows[0]?.access_token;
-
-              if (accessToken) {
-                const recipient: string = msgData.from;
-                const msgBody: string = msgData.text.body;
-                const phoneNumberId: string = value.metadata.phone_number_id;
-
-                const isAckBotEnabled = await getAckBotStatus(phoneNumberId);
-                if (isAckBotEnabled) {
-                  const customMessage = await getAckBotMessage(phoneNumberId);
-                  const ackText = customMessage || 'ack: ' + msgBody;
-
-                  await send(phoneNumberId, accessToken, recipient, ackText);
-
-                  const ackTimestamp = Date.now();
-                  const ackPayload = {
-                    object: 'whatsapp_business_account',
-                    entry: [
-                      {
-                        id: wabaId,
-                        changes: [
-                          {
-                            value: {
-                              messaging_product: 'whatsapp',
-                              metadata: { phone_number_id: phoneNumberId },
-                              messages: [
-                                {
-                                  from: '_ackbot_',
-                                  type: 'text',
-                                  text: { body: ackText },
-                                  timestamp: Math.floor(ackTimestamp / 1000),
-                                  _ackbot_recipient: recipient,
-                                },
-                              ],
-                            },
-                            field: 'messages',
-                          },
-                        ],
-                      },
-                    ],
-                  };
-
-                  const ably2 = new Ably.Realtime({ key: ablyKey, clientId: 'webhook_ackbot' });
-                  await ably2.connection.once('connected');
-                  const ackChannel = ably2.channels.get('get-started');
-                  await ackChannel.publish('first', ackPayload);
-                  ably2.close();
-                }
+              // An AckBot failure must not fail the webhook: a non-200 makes Meta
+              // redeliver it, which duplicates the message in the inbox and in SAP.
+              try {
+                await replyWithAckBot(entry.id, value, msgData, ablyKey);
+              } catch (err) {
+                const e = err as { code?: number; message?: string; error_subcode?: number };
+                console.error('[AckBot] reply failed:', JSON.stringify({ code: e?.code, subcode: e?.error_subcode, message: e?.message ?? String(err) }));
               }
             }
           }
@@ -175,4 +130,60 @@ export async function POST(request: NextRequest) {
     console.error('Webhook processing error:', error);
     return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
   }
+}
+
+interface IncomingText {
+  from: string;
+  text: { body: string };
+}
+
+async function replyWithAckBot(
+  wabaId: string,
+  value: { metadata: { phone_number_id: string } },
+  msgData: IncomingText,
+  ablyKey: string | undefined,
+): Promise<void> {
+  const phoneNumberId = value.metadata.phone_number_id;
+  if (!(await getAckBotStatus(phoneNumberId))) return;
+
+  const recipient = msgData.from;
+  const customMessage = await getAckBotMessage(phoneNumberId);
+  const ackText = customMessage || 'ack: ' + msgData.text.body;
+
+  await sendWithWabaToken(wabaId, phoneNumberId, recipient, ackText);
+  console.log('[AckBot] reply sent:', 'phoneNumberId', phoneNumberId);
+
+  const ackTimestamp = Date.now();
+  const ackPayload = {
+    object: 'whatsapp_business_account',
+    entry: [
+      {
+        id: wabaId,
+        changes: [
+          {
+            value: {
+              messaging_product: 'whatsapp',
+              metadata: { phone_number_id: phoneNumberId },
+              messages: [
+                {
+                  from: '_ackbot_',
+                  type: 'text',
+                  text: { body: ackText },
+                  timestamp: Math.floor(ackTimestamp / 1000),
+                  _ackbot_recipient: recipient,
+                },
+              ],
+            },
+            field: 'messages',
+          },
+        ],
+      },
+    ],
+  };
+
+  const ably2 = new Ably.Realtime({ key: ablyKey, clientId: 'webhook_ackbot' });
+  await ably2.connection.once('connected');
+  const ackChannel = ably2.channels.get('get-started');
+  await ackChannel.publish('first', ackPayload);
+  ably2.close();
 }

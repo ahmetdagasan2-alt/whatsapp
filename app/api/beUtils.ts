@@ -361,6 +361,51 @@ export async function getTokenForWaba(wabaId: string, userId: string): Promise<s
   return rows[0].access_token;
 }
 
+/**
+ * All stored tokens for a WABA, best first: this app's tokens before others,
+ * then the most recently refreshed. A WABA can have several rows (one per
+ * user/app that onboarded it) and older tokens may have been revoked.
+ */
+export async function getTokensForWaba(wabaId: string): Promise<string[]> {
+  const { rows }: { rows: { access_token: string; app_id: string | number }[] } = await sql`
+    SELECT access_token, app_id FROM wabas
+    WHERE waba_id = ${wabaId} AND access_token IS NOT NULL AND access_token <> ''
+    ORDER BY last_updated DESC NULLS LAST
+  `;
+  const appId = String(publicConfig.appId);
+  const ordered = [
+    ...rows.filter((r) => String(r.app_id) === appId),
+    ...rows.filter((r) => String(r.app_id) !== appId),
+  ];
+  return [...new Set(ordered.map((r) => r.access_token))];
+}
+
+// Graph error codes meaning "this token can't be used" — worth retrying with another token.
+const TOKEN_ERROR_CODES = new Set([10, 190, 200]);
+
+/** Sends a text message for a WABA, falling back to older tokens if the newest is rejected. */
+export async function sendWithWabaToken(
+  wabaId: string,
+  phoneNumberId: string,
+  destPhone: string,
+  messageContent: string,
+): Promise<SendMessageResponse> {
+  const tokens = await getTokensForWaba(wabaId);
+  if (tokens.length === 0) throw new Error(`No access token stored for WABA ${wabaId}`);
+  let lastError: unknown;
+  for (const token of tokens) {
+    try {
+      return await send(phoneNumberId, token, destPhone, messageContent);
+    } catch (err) {
+      lastError = err;
+      const code = (err as { code?: number })?.code;
+      if (code === undefined || !TOKEN_ERROR_CODES.has(code)) throw err;
+      console.log('sendWithWabaToken: token rejected, trying next', 'wabaId', wabaId, 'code', code);
+    }
+  }
+  throw lastError;
+}
+
 export async function getTokenForWabaByUser(wabaId: string, userId: string, appId: string): Promise<string | null> {
   console.log('getTokenForWabaByUser:', 'wabaId', wabaId, 'userId', userId, 'appId', appId);
   const { rows }: { rows: { access_token: string }[] } = await sql`
