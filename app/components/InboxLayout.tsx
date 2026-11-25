@@ -929,6 +929,21 @@ export default function InboxLayout({ phones, realtimeChannel }: { phones: Phone
         <div className={cn('flex-1 flex-col min-w-0', mobileView === 'phones' ? 'hidden md:flex' : 'flex')}>
           {selectedPhone ? (
             <>
+              {/* Phones only: always offer the number list, whatever the number count */}
+              {mobileView === 'chats' && (
+                <button
+                  type="button"
+                  onClick={() => setMobileView('phones')}
+                  className="md:hidden flex items-center gap-2 px-3 py-2.5 bg-white border-b border-gray-100 text-sm font-medium text-brand-700 flex-shrink-0"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  {t('Phone numbers', 'Numaralar')}
+                  <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700">
+                    {phones.length}
+                  </span>
+                </button>
+              )}
+
               {/* Phone header */}
               <div
                 className={cn(
@@ -937,16 +952,6 @@ export default function InboxLayout({ phones, realtimeChannel }: { phones: Phone
                 )}
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  {phones.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => setMobileView('phones')}
-                      className="md:hidden -ml-1 p-1.5 rounded-lg text-gray-500 hover:bg-gray-100"
-                      aria-label={t('Back to numbers', 'Numaralara dön')}
-                    >
-                      <ArrowLeft className="w-5 h-5" />
-                    </button>
-                  )}
                   <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600 flex-shrink-0">
                     {selectedPhone.display_phone_number.replace(/\D/g, '').slice(-2)}
                   </div>
