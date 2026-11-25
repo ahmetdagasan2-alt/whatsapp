@@ -8,7 +8,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 import Ably from 'ably';
-import { AlertTriangle, Phone as PhoneIcon } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, Phone as PhoneIcon } from 'lucide-react';
 
 import PhoneListSidebar from '@/app/components/PhoneListSidebar';
 import ConversationView, { type Message } from '@/app/components/ConversationView';
@@ -47,6 +47,10 @@ export default function InboxLayout({ phones, realtimeChannel }: { phones: Phone
   const [selectedPhone, setSelectedPhone] = useState<PhoneDetails | null>(phones[0] ?? null);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
   const [activeChannel, setActiveChannel] = useState<ChannelTab>('whatsapp');
+  // Phones show one pane at a time (numbers → conversations → chat); md+ shows all side by side.
+  const [mobileView, setMobileView] = useState<'phones' | 'chats' | 'conversation'>(
+    phones.length > 1 ? 'phones' : 'chats',
+  );
 
   // Global message state: { [phone_number_id]: { [chat_id]: Message[] } }
   const [allMessages, setAllMessages] = useState<Record<string, Record<string, Message[]>>>({});
@@ -390,6 +394,7 @@ export default function InboxLayout({ phones, realtimeChannel }: { phones: Phone
       if (phone) {
         setSelectedPhone(phone);
         setSelectedChatId(cs.callerNumber);
+        setMobileView('conversation');
         // Create chat if it doesn't exist, or update name if we have one from the webhook
         const displayName = cs.callerName || cs.callerNumber;
         setAllChats(prev => {
@@ -909,24 +914,44 @@ export default function InboxLayout({ phones, realtimeChannel }: { phones: Phone
       {/* Main 2-panel layout */}
       <div className="flex flex-1 min-h-0">
         {/* Left: Phone list */}
-        <PhoneListSidebar
-          phones={phones}
-          selectedPhoneId={selectedPhone?.id ?? null}
-          onSelectPhone={setSelectedPhone}
-        />
+        <div className={cn('md:flex', mobileView === 'phones' ? 'flex w-full md:w-auto' : 'hidden')}>
+          <PhoneListSidebar
+            phones={phones}
+            selectedPhoneId={selectedPhone?.id ?? null}
+            onSelectPhone={(phone) => {
+              setSelectedPhone(phone);
+              setMobileView('chats');
+            }}
+          />
+        </div>
 
         {/* Right: Conversation area */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className={cn('flex-1 flex-col min-w-0', mobileView === 'phones' ? 'hidden md:flex' : 'flex')}>
           {selectedPhone ? (
             <>
               {/* Phone header */}
-              <div className="bg-white border-b border-gray-100 px-5 py-3 flex items-center justify-between flex-shrink-0">
-                <div className="flex items-center gap-3">
+              <div
+                className={cn(
+                  'bg-white border-b border-gray-100 px-3 md:px-5 py-3 flex-wrap items-center justify-between gap-2 flex-shrink-0',
+                  mobileView === 'conversation' ? 'hidden md:flex' : 'flex',
+                )}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  {phones.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => setMobileView('phones')}
+                      className="md:hidden -ml-1 p-1.5 rounded-lg text-gray-500 hover:bg-gray-100"
+                      aria-label={t('Back to numbers', 'Numaralara dön')}
+                    >
+                      <ArrowLeft className="w-5 h-5" />
+                    </button>
+                  )}
                   <div className="w-9 h-9 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600 flex-shrink-0">
                     {selectedPhone.display_phone_number.replace(/\D/g, '').slice(-2)}
                   </div>
-                  <div>
-                    <div className="text-sm font-semibold text-gray-900">
+                  <div className="min-w-0">
+                    <div className="text-sm font-semibold text-gray-900 truncate">
                       {selectedPhone.display_phone_number}
                       {selectedPhone.verified_name && (
                         <span className="ml-2 font-normal text-gray-500">{selectedPhone.verified_name}</span>
@@ -961,7 +986,7 @@ export default function InboxLayout({ phones, realtimeChannel }: { phones: Phone
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <PhoneStatus
                     key={'ps-' + selectedPhone.id}
                     phone={selectedPhone}
@@ -1054,7 +1079,12 @@ export default function InboxLayout({ phones, realtimeChannel }: { phones: Phone
               <div className="flex flex-1 min-h-0">
                 {/* Chat list (only shown when there are conversations) */}
                 {selectedPhone && Object.keys(allChats[selectedPhone.id] ?? {}).length > 0 && (
-                  <div className="w-60 border-r border-gray-100 bg-white overflow-y-auto flex-shrink-0">
+                  <div
+                    className={cn(
+                      'w-full md:w-60 md:border-r border-gray-100 bg-white overflow-y-auto flex-shrink-0',
+                      mobileView === 'conversation' ? 'hidden md:block' : 'block',
+                    )}
+                  >
                     <div className="px-4 py-2.5 border-b border-gray-50">
                       <h3 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{t('Conversations', 'Konuşmalar')}</h3>
                     </div>
@@ -1069,6 +1099,7 @@ export default function InboxLayout({ phones, realtimeChannel }: { phones: Phone
                             onClick={() => {
                               setSelectedChatId(chatId);
                               markRead(selectedPhone.id, chatId);
+                              setMobileView('conversation');
                             }}
                             className={cn(
                               'w-full text-left flex items-center gap-3 px-4 py-3 border-b border-gray-50 transition-colors',
@@ -1126,8 +1157,15 @@ export default function InboxLayout({ phones, realtimeChannel }: { phones: Phone
                   </div>
                 )}
 
-                {/* Conversation view */}
-                <div className="flex-1 flex flex-col min-w-0">
+                {/* Conversation view — on phones hidden behind the chat list until a chat is opened */}
+                <div
+                  className={cn(
+                    'flex-1 flex-col min-w-0',
+                    mobileView === 'chats' && Object.keys(allChats[selectedPhone.id] ?? {}).length > 0
+                      ? 'hidden md:flex'
+                      : 'flex',
+                  )}
+                >
                   {selectedChatId ? (
                     <ConversationView
                       chatId={selectedChatId}
@@ -1143,6 +1181,7 @@ export default function InboxLayout({ phones, realtimeChannel }: { phones: Phone
                       permissionExpirationTime={permissionMap[selectedChatId]?.expirationTime}
                       permissionRemainingRequests={permissionMap[selectedChatId]?.remainingRequests}
                       onRequestPermission={handleRequestPermission}
+                      onBack={() => setMobileView('chats')}
                       hasMissedCall={missedCallChats[selectedPhone.id]?.has(selectedChatId) ?? false}
                       onCallBack={() => handleCallClick(selectedChatId)}
                     />

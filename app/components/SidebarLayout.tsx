@@ -206,7 +206,7 @@ export default function SidebarLayout({ children, userId }: SidebarLayoutProps) 
   const navSections = getNavSections(t, isAdminEmail(userId));
 
   return (
-    <div className="h-screen flex flex-col bg-[#f5f7fb] overflow-hidden">
+    <div className="h-dvh flex flex-col bg-[#f5f7fb] overflow-hidden">
       {/* Top Header Bar */}
       <header className="relative bg-white border-b border-gray-200 px-4 md:px-6 h-16 flex items-center justify-between flex-shrink-0 z-50 shadow-[0_1px_2px_rgba(16,24,40,0.04)]">
         <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-brand-cyan to-brand-600" />

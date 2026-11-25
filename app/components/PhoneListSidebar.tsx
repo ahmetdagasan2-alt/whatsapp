@@ -17,7 +17,7 @@ interface PhoneListSidebarProps {
 export default function PhoneListSidebar({ phones, selectedPhoneId, onSelectPhone }: PhoneListSidebarProps) {
   const t = useT();
   return (
-    <div className="w-72 bg-white border-r border-gray-100 flex flex-col h-full flex-shrink-0">
+    <div className="w-full md:w-72 bg-white md:border-r border-gray-100 flex flex-col h-full flex-shrink-0">
       {/* Header */}
       <div className="px-4 py-3.5 border-b border-gray-100">
         <h2 className="text-sm font-semibold text-gray-900">{t('My Phone Numbers', 'Telefon Numaralarım')}</h2>

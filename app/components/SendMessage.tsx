@@ -38,7 +38,7 @@ export default function SendMessage({ sendHandler }: SendMessageProps) {
         placeholder={t('Type your message here...', 'Mesajınızı yazın...')}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
-        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm transition duration-200 ease-in-out focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:border-gray-400"
+        className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-base md:text-sm transition duration-200 ease-in-out focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent hover:border-gray-400"
       />
       <button
         onClick={() => {

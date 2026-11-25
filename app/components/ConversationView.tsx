@@ -7,7 +7,7 @@
 
 import { useEffect, useRef } from 'react';
 
-import { Phone, Clock, PhoneMissed } from 'lucide-react';
+import { ArrowLeft, Phone, Clock, PhoneMissed } from 'lucide-react';
 import MessageBubble, { type Message } from '@/app/components/MessageBubble';
 import SendMessage from '@/app/components/SendMessage';
 import CallPermissionRibbon from '@/app/components/CallPermissionRibbon';
@@ -31,6 +31,8 @@ interface ConversationViewProps {
   onRequestPermission?: () => void;
   hasMissedCall?: boolean;
   onCallBack?: () => void;
+  /** Phones only: back to the conversation list. */
+  onBack?: () => void;
 }
 
 export type { Message };
@@ -47,6 +49,7 @@ export default function ConversationView({
   onRequestPermission,
   hasMissedCall,
   onCallBack,
+  onBack,
 }: ConversationViewProps) {
   const t = useT();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -57,12 +60,22 @@ export default function ConversationView({
   return (
     <div className="flex-1 flex flex-col min-h-0">
       {/* Conversation header */}
-      <div className="bg-white border-b border-gray-100 px-5 py-3 flex items-center gap-3 flex-shrink-0">
+      <div className="bg-white border-b border-gray-100 px-3 md:px-5 py-3 flex items-center gap-3 flex-shrink-0">
+        {onBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="md:hidden -ml-1 p-1.5 rounded-lg text-gray-500 hover:bg-gray-100"
+            aria-label={t('Back to conversations', 'Konuşmalara dön')}
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+        )}
         <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-xs font-bold text-indigo-600 flex-shrink-0">
           {displayName.slice(0, 2).toUpperCase()}
         </div>
-        <div>
-          <div className="text-sm font-semibold text-gray-900">{displayName}</div>
+        <div className="min-w-0">
+          <div className="text-sm font-semibold text-gray-900 truncate">{displayName}</div>
           <div className="text-xs text-gray-400">WhatsApp</div>
         </div>
         {onCallClick && (
@@ -124,7 +137,7 @@ export default function ConversationView({
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-0.5 bg-gradient-to-b from-[#f8f9ff] to-[#f1f3f9]">
+      <div className="flex-1 overflow-y-auto px-3 md:px-5 py-4 space-y-0.5 bg-gradient-to-b from-[#f8f9ff] to-[#f1f3f9]">
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center">
             <div className="w-14 h-14 rounded-full bg-white shadow-sm flex items-center justify-center mb-4">
@@ -153,7 +166,7 @@ export default function ConversationView({
       </div>
 
       {/* Input */}
-      <div className="bg-white border-t border-gray-100 px-4 py-3 flex-shrink-0">
+      <div className="bg-white border-t border-gray-100 px-3 md:px-4 py-3 flex-shrink-0">
         <SendMessage sendHandler={onSendMessage} />
       </div>
     </div>

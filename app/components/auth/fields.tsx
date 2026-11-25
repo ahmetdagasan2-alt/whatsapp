@@ -14,7 +14,7 @@ import { getCountryOptions } from '@/lib/auth/phone';
 import { cn } from '@/lib/utils';
 
 export const inputClass =
-  'w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-white text-[15px] text-slate-900 placeholder:text-slate-400 transition-colors focus:outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-500/10 disabled:bg-slate-50 disabled:text-slate-400';
+  'w-full h-11 px-3.5 rounded-xl border border-slate-200 bg-white text-base sm:text-[15px] text-slate-900 placeholder:text-slate-400 transition-colors focus:outline-none focus:border-brand-400 focus:ring-4 focus:ring-brand-500/10 disabled:bg-slate-50 disabled:text-slate-400';
 
 export function Field({ label, htmlFor, children, hint }: { label: string; htmlFor?: string; children: ReactNode; hint?: string }) {
   return (

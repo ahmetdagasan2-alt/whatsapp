@@ -143,11 +143,9 @@ export default function MessageBubble(props: Message) {
           {props.text}
         </div>
         {props.failedReason ? (
-          <span role="alert" className="flex items-start gap-1 text-[11px] text-red-600 mt-1 px-1 text-right">
-            <AlertCircle className="w-3 h-3 mt-px flex-shrink-0" />
-            <span>
-              {t('Not sent', 'Gönderilemedi')}: {props.failedReason}
-            </span>
+          <span role="alert" className="text-[11px] text-red-600 mt-1 px-1 text-right">
+            <AlertCircle className="inline w-3 h-3 mr-1 -mt-0.5" />
+            {t('Not sent', 'Gönderilemedi')}: {props.failedReason}
           </span>
         ) : (
           <span className="text-[10px] text-gray-400 mt-1 px-1">{formattedTime}</span>
