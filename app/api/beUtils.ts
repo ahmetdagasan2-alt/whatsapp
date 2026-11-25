@@ -8,6 +8,7 @@
 import { sql } from '@vercel/postgres';
 
 import getPrivateConfig from '@/app/privateConfig';
+import { isAdminEmail } from '@/lib/admin';
 import publicConfig from '@/app/publicConfig';
 import type {
   SubscribeWebhookResponse,
@@ -265,13 +266,7 @@ export async function send(
 //////////////////////////////////////////////////////////
 
 export async function getWabas(userId: string): Promise<WabaWithDetails[]> {
-  // Get page IDs and access tokens from the database
-  const { rows }: { rows: WabaRow[] } = await sql`
-    SELECT DISTINCT waba_id, access_token, business_id
-    FROM wabas
-    WHERE user_id = ${userId}
-    ORDER BY waba_id ASC
-  `;
+  const rows: WabaRow[] = await getWabaRows(userId);
 
   // Fetch page names from Facebook Graph API
   const wholeWabas: WabaWithDetails[] = await Promise.all(
@@ -315,10 +310,38 @@ async function getWabaDetails(wabaId: string, accessToken: string): Promise<Waba
 // Phones
 //////////////////////////////////////////////////////////
 
+/** One row per WABA with its newest token: the user's own WABAs, or every customer's for the admin. */
 async function getWabaRows(userId: string): Promise<WabaRow[]> {
-  const { rows }: { rows: WabaRow[] } =
-    await sql`SELECT DISTINCT ON (waba_id) access_token, waba_id, business_id FROM wabas WHERE user_id = ${userId}`;
+  const { rows }: { rows: WabaRow[] } = isAdminEmail(userId)
+    ? await sql`
+        SELECT DISTINCT ON (waba_id) access_token, waba_id, business_id FROM wabas
+        WHERE access_token IS NOT NULL AND access_token <> ''
+        ORDER BY waba_id ASC, last_updated DESC NULLS LAST`
+    : await sql`
+        SELECT DISTINCT ON (waba_id) access_token, waba_id, business_id FROM wabas
+        WHERE user_id = ${userId}
+        ORDER BY waba_id ASC, last_updated DESC NULLS LAST`;
   return rows;
+}
+
+/** Emails of every user who connected this WABA (its webhooks go to each of them). */
+export async function getWabaOwners(wabaId: string): Promise<string[]> {
+  const { rows }: { rows: { user_id: string }[] } =
+    await sql`SELECT DISTINCT user_id FROM wabas WHERE waba_id = ${wabaId}`;
+  return rows.map((r) => r.user_id).filter(Boolean);
+}
+
+/** Whether the user may manage this phone: they connected its WABA (or are the admin) and it belongs to it. */
+export async function userCanAccessPhone(userId: string, wabaId: string, phoneId: string): Promise<boolean> {
+  let accessToken: string;
+  try {
+    accessToken = await getTokenForWaba(wabaId, userId);
+  } catch {
+    return false;
+  }
+  const data = await graphApiWrapperGet(`/${wabaId}/phone_numbers?fields=id&limit=100`, accessToken);
+  const ids: string[] = (data?.data ?? []).map((p: { id: string }) => String(p.id));
+  return ids.includes(String(phoneId));
 }
 
 export async function getClientPhones(userId: string): Promise<ClientPhone[]> {
@@ -353,6 +376,11 @@ async function getPhoneDetails(phoneId: string, accessToken: string, wabaId: str
 
 export async function getTokenForWaba(wabaId: string, userId: string): Promise<string> {
   console.log('getTokenForWaba:', 'wabaId', wabaId);
+  if (isAdminEmail(userId)) {
+    const [token] = await getTokensForWaba(wabaId);
+    if (!token) throw new Error(`No access token found for WABA ${wabaId}`);
+    return token;
+  }
   const { rows }: { rows: { access_token: string }[] } =
     await sql`SELECT access_token FROM wabas WHERE waba_id = ${wabaId} AND user_id = ${userId}`;
   if (rows.length === 0) {
@@ -408,6 +436,10 @@ export async function sendWithWabaToken(
 
 export async function getTokenForWabaByUser(wabaId: string, userId: string, appId: string): Promise<string | null> {
   console.log('getTokenForWabaByUser:', 'wabaId', wabaId, 'userId', userId, 'appId', appId);
+  if (isAdminEmail(userId)) {
+    const [token] = await getTokensForWaba(wabaId);
+    return token ?? null;
+  }
   const { rows }: { rows: { access_token: string }[] } = await sql`
     SELECT access_token FROM wabas
     WHERE waba_id = ${wabaId} AND user_id = ${userId} AND app_id = ${appId}
@@ -792,13 +824,8 @@ export async function getAckBotStatus(phoneId: string): Promise<boolean> {
   return value === true || value === 'true' || value === 't';
 }
 
-export async function getAckBotMessage(phoneId: string, userId?: string): Promise<string> {
-  if (userId) {
-    const { rows }: { rows: { ack_bot_message?: string }[] } =
-      await sql`SELECT ack_bot_message FROM phones WHERE phone_id = ${phoneId} AND user_id = ${userId}`;
-    return rows[0]?.ack_bot_message || '';
-  }
-  // Webhook context: no user session, authenticated by X-Hub-Signature-256
+// Callers check access first: the webhook by its signature, /api/phones by userCanAccessPhone.
+export async function getAckBotMessage(phoneId: string): Promise<string> {
   const { rows }: { rows: { ack_bot_message?: string }[] } =
     await sql`SELECT ack_bot_message FROM phones WHERE phone_id = ${phoneId}`;
   return rows[0]?.ack_bot_message || '';
@@ -816,12 +843,12 @@ export async function setAckBotStatus(
     ackBotMessage !== undefined
       ? await sql`
             UPDATE phones
-            SET is_ack_bot_enabled = ${isAckBotEnabled}, ack_bot_message = ${ackBotMessage}, user_id = ${userId}
+            SET is_ack_bot_enabled = ${isAckBotEnabled}, ack_bot_message = ${ackBotMessage}
             WHERE phone_id = ${phoneId}
         `
       : await sql`
             UPDATE phones
-            SET is_ack_bot_enabled = ${isAckBotEnabled}, user_id = ${userId}
+            SET is_ack_bot_enabled = ${isAckBotEnabled}
             WHERE phone_id = ${phoneId}
         `;
   if ((updated.rowCount ?? 0) > 0) return updated;

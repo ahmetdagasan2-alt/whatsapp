@@ -9,6 +9,7 @@ import Ably from 'ably';
 
 import { withAuth } from '@/app/api/authWrapper';
 import getPrivateConfig from '@/app/privateConfig';
+import { channelForViewer } from '@/lib/realtime';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,6 +20,8 @@ async function createTokenRequest(clientId: string) {
     {
       ttl: 3600000,
       clientId: clientId,
+      // Only the viewer's own webhook channel (the admin's sees every customer).
+      capability: JSON.stringify({ [channelForViewer(clientId)]: ['subscribe'] }),
     },
     {
       key: ablyKey,

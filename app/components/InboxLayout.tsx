@@ -34,7 +34,7 @@ type ChatMeta = {
 
 type ChannelTab = 'whatsapp' | 'messenger' | 'instagram';
 
-export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
+export default function InboxLayout({ phones, realtimeChannel }: { phones: PhoneDetails[]; realtimeChannel: string }) {
   const t = useT();
   const locale = useLocale();
   // Callbacks registered once (Ably, CallingClient) read the latest translator from these refs.
@@ -592,7 +592,7 @@ export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
       setAblyState('failed');
     });
 
-    const channel = ablyClient.channels.get('get-started');
+    const channel = ablyClient.channels.get(realtimeChannel);
     channel.subscribe('first', (message) => {
       const ownedPhoneIds = new Set(phonesRef.current.map((p) => p.id));
       const fields = message.data.entry?.flatMap((e: { changes?: { field: string }[] }) => e.changes?.map((c) => c.field));
@@ -851,7 +851,7 @@ export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
       channel.unsubscribe();
       ablyClient.close();
     };
-  }, [addMessage, addChat, markUnread, markMissedCall]);
+  }, [addMessage, addChat, markUnread, markMissedCall, realtimeChannel]);
 
   return (
     <div className="flex flex-col w-full h-full overflow-hidden bg-gray-50">

@@ -85,7 +85,7 @@ function WebhookRow({ webhook, index }: { webhook: WebhookEntry; index: number }
   );
 }
 
-export default function LiveWebhooks({ appId }: { appId: string }) {
+export default function LiveWebhooks({ appId, channel: channelName }: { appId: string; channel: string }) {
   const t = useT();
   const [webhooks, setWebhooks] = useState<WebhookEntry[]>([]);
   const [isMounted, setIsMounted] = useState(false);
@@ -116,13 +116,13 @@ export default function LiveWebhooks({ appId }: { appId: string }) {
     });
     ablyClient.connection.on('connected', () => setConnected(true));
     ablyClient.connection.on('disconnected', () => setConnected(false));
-    const channel = ablyClient.channels.get('get-started');
+    const channel = ablyClient.channels.get(channelName);
     channel.subscribe('first', (message) => addWebhook(message.data));
     return function cleanup() {
       channel.unsubscribe();
       ablyClient.close();
     };
-  }, []);
+  }, [channelName]);
 
   if (!isMounted) return null;
 

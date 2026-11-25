@@ -9,6 +9,7 @@ import LoggedOut from '@/app/components/LoggedOut';
 import publicConfig from '@/app/publicConfig';
 import { getAppDetails, getClientPhones } from '@/app/api/beUtils';
 import InboxLayout from '@/app/components/InboxLayout';
+import { channelForViewer } from '@/lib/realtime';
 
 export default async function Home() {
   const session = await auth.getSession();
@@ -28,7 +29,7 @@ export default async function Home() {
   return (
     <SidebarLayout userId={userId} logoUrl={logoUrl} appName={appName}>
       <div className="h-full flex flex-col">
-        <InboxLayout phones={phones} />
+        <InboxLayout phones={phones} realtimeChannel={channelForViewer(userId)} />
       </div>
     </SidebarLayout>
   );

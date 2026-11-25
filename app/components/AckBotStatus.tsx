@@ -27,7 +27,7 @@ export default function AckBotStatus({ phone }: { phone: PhoneDetails }) {
       setError('');
       (async () => {
         try {
-          const res = await fetch(`/api/phones/${phone.id}?phoneId=${phone.id}`);
+          const res = await fetch(`/api/phones/${phone.id}?phoneId=${phone.id}&wabaId=${phone.wabaId}`);
           const data = await res.json();
           setAckMessage(data.ackBotMessage || '');
         } catch (err) {
@@ -36,7 +36,7 @@ export default function AckBotStatus({ phone }: { phone: PhoneDetails }) {
         }
       })();
     }
-  }, [showModal, phone.id, t]);
+  }, [showModal, phone.id, phone.wabaId, t]);
 
   async function handleToggle() {
     if (isAckBotEnabled) {
@@ -47,6 +47,7 @@ export default function AckBotStatus({ phone }: { phone: PhoneDetails }) {
         await feGraphApiPostWrapper(`/api/phones/${phone.id}`, {
           isAckBotEnabled: false,
           phoneId: phone.id,
+          wabaId: phone.wabaId,
         });
         setIsAckBotEnabled(false);
       } catch (err) {
@@ -68,6 +69,7 @@ export default function AckBotStatus({ phone }: { phone: PhoneDetails }) {
       await feGraphApiPostWrapper(`/api/phones/${phone.id}`, {
         isAckBotEnabled: true,
         phoneId: phone.id,
+        wabaId: phone.wabaId,
         ackBotMessage: ackMessage,
       });
       setIsAckBotEnabled(true);
@@ -91,6 +93,7 @@ export default function AckBotStatus({ phone }: { phone: PhoneDetails }) {
       await feGraphApiPostWrapper(`/api/phones/${phone.id}`, {
         isAckBotEnabled: true,
         phoneId: phone.id,
+        wabaId: phone.wabaId,
         ackBotMessage: ackMessage,
       });
       setShowModal(false);

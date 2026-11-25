@@ -7,6 +7,7 @@ import { auth } from '@/lib/auth';
 import SidebarLayout from '@/app/components/SidebarLayout';
 import LoggedOut from '@/app/components/LoggedOut';
 import publicConfig from '@/app/publicConfig';
+import { channelForViewer } from '@/lib/realtime';
 import { getT } from '@/app/i18n/server';
 import { getAppDetails } from '@/app/api/beUtils';
 import LiveWebhooks from '@/app/components/LiveWebhooks';
@@ -32,7 +33,7 @@ export default async function MyWebhooks() {
           </p>
         </div>
 
-        <LiveWebhooks appId={appId ?? ''} />
+        <LiveWebhooks appId={appId ?? ''} channel={channelForViewer(userId)} />
       </div>
     </SidebarLayout>
   );

@@ -8,7 +8,8 @@ import { NextResponse, after, type NextRequest } from 'next/server';
 import Ably from 'ably';
 import crypto from 'crypto';
 
-import { getAckBotStatus, getAckBotMessage, sendWithWabaToken } from '@/app/api/beUtils';
+import { getAckBotStatus, getAckBotMessage, getWabaOwners, sendWithWabaToken } from '@/app/api/beUtils';
+import { channelsForOwners } from '@/lib/realtime';
 import { dispatchWebhookToSap } from '@/app/api/sap/sapRouter';
 import privateConfig from '@/app/privateConfig';
 
@@ -57,9 +58,20 @@ export async function POST(request: NextRequest) {
 
     const ably = new Ably.Realtime({ key: ablyKey, clientId: 'webhook_server' });
     await ably.connection.once('connected');
-    const channel = ably.channels.get('get-started');
 
-    // Publish raw webhook data for the live webhook viewer (unchanged)
+    // Each customer only receives webhooks for the WABAs they connected; the admin gets all.
+    const owners =
+      data.object === 'whatsapp_business_account'
+        ? (await Promise.all((data.entry ?? []).map((e: { id: string }) => getWabaOwners(String(e.id))))).flat()
+        : [];
+    const channels = channelsForOwners(owners).map((name) => ably.channels.get(name));
+    const channel = {
+      publish: async (name: string, payload: unknown) => {
+        await Promise.all(channels.map((c) => c.publish(name, payload)));
+      },
+    };
+
+    // Publish raw webhook data for the live webhook viewer
     await channel.publish('first', data);
     console.log('[Webhook] Published raw data. object:', data.object, 'fields:', data.entry?.map((e: { changes?: { field: string }[] }) => e.changes?.map((c) => c.field)).flat());
 
@@ -113,7 +125,7 @@ export async function POST(request: NextRequest) {
               // An AckBot failure must not fail the webhook: a non-200 makes Meta
               // redeliver it, which duplicates the message in the inbox and in SAP.
               try {
-                await replyWithAckBot(entry.id, value, msgData, ablyKey);
+                await replyWithAckBot(entry.id, value, msgData, channel);
               } catch (err) {
                 const e = err as { code?: number; message?: string; error_subcode?: number };
                 console.error('[AckBot] reply failed:', JSON.stringify({ code: e?.code, subcode: e?.error_subcode, message: e?.message ?? String(err) }));
@@ -141,7 +153,7 @@ async function replyWithAckBot(
   wabaId: string,
   value: { metadata: { phone_number_id: string } },
   msgData: IncomingText,
-  ablyKey: string | undefined,
+  channel: { publish: (name: string, payload: unknown) => Promise<void> },
 ): Promise<void> {
   const phoneNumberId = value.metadata.phone_number_id;
   if (!(await getAckBotStatus(phoneNumberId))) return;
@@ -181,9 +193,5 @@ async function replyWithAckBot(
     ],
   };
 
-  const ably2 = new Ably.Realtime({ key: ablyKey, clientId: 'webhook_ackbot' });
-  await ably2.connection.once('connected');
-  const ackChannel = ably2.channels.get('get-started');
-  await ackChannel.publish('first', ackPayload);
-  ably2.close();
+  await channel.publish('first', ackPayload);
 }
