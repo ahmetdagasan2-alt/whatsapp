@@ -325,6 +325,7 @@ Set these in `.env.local` for local development or in your Vercel project settin
 ```env
 # Authentication
 SESSION_SECRET='a-long-random-string-for-session-signing'
+ADMIN_PASSWORD='password-for-destek@dekatre.com'
 
 # WhatsApp verification codes (signup + password reset)
 WA_OTP_PHONE_NUMBER_ID='sending-phone-number-id'
@@ -358,6 +359,7 @@ TP_CONTACT_EMAIL='your-contact-email@example.com'
 
 | Variable | Description |
 |----------|-------------|
+| `ADMIN_PASSWORD` | _Optional._ Password of the fixed admin account `destek@dekatre.com`. That account needs no signup and sees the admin-only sections; nobody can register with its email. Leave unset to disable admin login. |
 | `SESSION_SECRET` | Random string (32+ characters) that signs login session cookies. Generate with `openssl rand -hex 32`. An existing `AUTH0_SECRET` is accepted as a fallback. |
 | `WA_OTP_PHONE_NUMBER_ID` | WhatsApp phone number ID that sends signup / password-reset codes. |
 | `WA_OTP_ACCESS_TOKEN` | Access token allowed to send messages from that number. |

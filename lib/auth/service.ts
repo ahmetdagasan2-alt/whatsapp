@@ -6,6 +6,8 @@
 // Signup / login / password-reset flows. Route handlers in app/api/auth/* are thin
 // wrappers that translate AuthError codes into HTTP responses.
 
+import { createHash, timingSafeEqual } from 'crypto';
+
 import {
   consumeOtp,
   countRecentSends,
@@ -32,6 +34,7 @@ import {
   otpExpiry,
   sendOtpViaWhatsApp,
 } from '@/lib/auth/otp';
+import { ADMIN_EMAIL, ADMIN_NAME, isAdminEmail } from '@/lib/admin';
 import { hashPassword, isStrongEnough, verifyPassword } from '@/lib/auth/password';
 import { isCountryCode, maskPhone, toE164 } from '@/lib/auth/phone';
 import { startSession } from '@/lib/auth/session';
@@ -109,6 +112,8 @@ export async function startSignup(input: Record<string, unknown>) {
 
   if (!firstName || !lastName) throw new AuthError('invalid_input');
   if (!EMAIL_RE.test(email)) throw new AuthError('invalid_email');
+  // The admin account is fixed (see lib/admin.ts); signing up with its email would grant admin rights.
+  if (isAdminEmail(email)) throw new AuthError('email_taken', 409);
   if (!isCountryCode(country)) throw new AuthError('invalid_phone');
   const phoneE164 = toE164(country, String(input.phone ?? ''));
   if (!phoneE164) throw new AuthError('invalid_phone');
@@ -176,16 +181,39 @@ export async function resendCode(input: Record<string, unknown>) {
 
 // ── Login ───────────────────────────────────────────────────────────────────
 
+function sameSecret(a: string, b: string): boolean {
+  // Compare digests so neither the length nor the content leaks through timing.
+  return timingSafeEqual(createHash('sha256').update(a).digest(), createHash('sha256').update(b).digest());
+}
+
+// A short pause after a failed login slows down password guessing.
+const FAILED_LOGIN_DELAY_MS = 600;
+const failedLoginPause = () => new Promise((resolve) => setTimeout(resolve, FAILED_LOGIN_DELAY_MS));
+
 export async function login(input: Record<string, unknown>) {
   const email = normalizeEmail(input.email);
   const password = typeof input.password === 'string' ? input.password : '';
+
+  if (isAdminEmail(email)) {
+    const adminPassword = process.env.ADMIN_PASSWORD?.trim();
+    if (!adminPassword || !password || !sameSecret(password, adminPassword)) {
+      await failedLoginPause();
+      throw new AuthError('invalid_credentials', 401);
+    }
+    await startSession({ sub: 'admin', email: ADMIN_EMAIL, name: ADMIN_NAME });
+    return;
+  }
+
   const user = email ? await findUserByEmail(email) : null;
   // Always run a hash comparison so response time doesn't reveal whether the email exists.
   const ok = await verifyPassword(
     password,
     user?.password_hash ?? 'scrypt$16384$8$1$AAAAAAAAAAAAAAAAAAAAAA==$AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==',
   );
-  if (!user || !ok) throw new AuthError('invalid_credentials', 401);
+  if (!user || !ok) {
+    await failedLoginPause();
+    throw new AuthError('invalid_credentials', 401);
+  }
   await startSession({ sub: String(user.id), email: user.email, name: `${user.first_name} ${user.last_name}` });
 }
 
@@ -195,7 +223,8 @@ export async function startPasswordReset(input: Record<string, unknown>) {
   const email = normalizeEmail(input.email);
   if (!EMAIL_RE.test(email)) throw new AuthError('invalid_email');
   const requestId = generateRequestId();
-  const user = await findUserByEmail(email);
+  // The admin password lives in ADMIN_PASSWORD and is changed in Vercel, not here.
+  const user = isAdminEmail(email) ? null : await findUserByEmail(email);
   // Unknown emails get the same response so the form can't be used to discover accounts.
   if (!user) return { requestId, resendAfter: OTP_RESEND_COOLDOWN_SECONDS };
 

@@ -275,3 +275,45 @@ describe('login and password reset', () => {
     );
   });
 });
+
+describe('fixed admin account', () => {
+  const ADMIN = 'destek@dekatre.com';
+
+  beforeEach(() => {
+    process.env.ADMIN_PASSWORD = 'Dekatre-Admin-2026!';
+  });
+
+  it('logs in with ADMIN_PASSWORD without a users row', async () => {
+    await login({ email: 'Destek@Dekatre.com', password: 'Dekatre-Admin-2026!' });
+    expect(sessions).toEqual([{ sub: 'admin', email: ADMIN, name: 'Dekatre Danışmanlık' }]);
+    expect(db.users).toHaveLength(0);
+  });
+
+  it('rejects a wrong password, and any password when ADMIN_PASSWORD is not set', async () => {
+    await expectAuthError(login({ email: ADMIN, password: 'yanlis' }), 'invalid_credentials');
+    delete process.env.ADMIN_PASSWORD;
+    await expectAuthError(login({ email: ADMIN, password: '' }), 'invalid_credentials');
+    await expectAuthError(login({ email: ADMIN, password: 'anything' }), 'invalid_credentials');
+    expect(sessions).toHaveLength(0);
+  });
+
+  it('cannot be claimed through signup', async () => {
+    await expectAuthError(startSignup({ ...validSignup, email: 'DESTEK@dekatre.com' }), 'email_taken');
+    expect(sentCodes).toHaveLength(0);
+  });
+
+  it('ignores a users row someone created earlier with the admin email', async () => {
+    db.users.push({
+      id: 99,
+      first_name: 'X',
+      last_name: 'Y',
+      email: ADMIN,
+      phone_e164: '+905550000000',
+      password_hash: await hashPassword('db-password-123'),
+    });
+    await expectAuthError(login({ email: ADMIN, password: 'db-password-123' }), 'invalid_credentials');
+    const reset = await startPasswordReset({ email: ADMIN });
+    expect(reset).toHaveProperty('requestId');
+    expect(sentCodes).toHaveLength(0);
+  });
+});
