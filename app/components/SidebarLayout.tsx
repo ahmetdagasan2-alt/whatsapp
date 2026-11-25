@@ -32,6 +32,7 @@ import {
 import LanguageSwitcher from '@/app/components/LanguageSwitcher';
 import { useT } from '@/app/i18n/client';
 import type { T } from '@/app/i18n/locale';
+import { isAdminEmail } from '@/lib/admin';
 import { cn } from '@/lib/utils';
 
 interface SidebarLayoutProps {
@@ -46,10 +47,11 @@ interface NavItem {
   description?: string;
   href: string;
   Icon: typeof Home;
+  adminOnly?: boolean;
 }
 
-function getNavSections(t: T): { title: string; items: NavItem[] }[] {
-  return [
+function getNavSections(t: T, isAdmin: boolean): { title: string; items: NavItem[] }[] {
+  const sections: { title: string; items: NavItem[] }[] = [
     {
       title: t('Messaging', 'Mesajlaşma'),
       items: [
@@ -70,6 +72,7 @@ function getNavSections(t: T): { title: string; items: NavItem[] }[] {
           description: t('Send template and marketing messages', 'Şablon ve pazarlama mesajları gönderin'),
           href: '/paid_messaging',
           Icon: Mail,
+          adminOnly: true,
         },
       ],
     },
@@ -77,11 +80,16 @@ function getNavSections(t: T): { title: string; items: NavItem[] }[] {
       title: t('My Assets', 'Varlıklarım'),
       items: [
         { label: t('WhatsApp Accounts', 'WhatsApp Hesapları'), href: '/my-wabas', Icon: Building2 },
-        { label: t('Facebook Pages', 'Facebook Sayfaları'), href: '/my-pages', Icon: FileText },
-        { label: t('Ad Accounts', 'Reklam Hesapları'), href: '/my-ad-accounts', Icon: Megaphone },
-        { label: t('Datasets', 'Veri Kümeleri'), href: '/my-datasets', Icon: Database },
-        { label: t('Catalogs', 'Kataloglar'), href: '/my-catalogs', Icon: BookOpen },
-        { label: t('Instagram Accounts', 'Instagram Hesapları'), href: '/my-instagram-accounts', Icon: Instagram },
+        { label: t('Facebook Pages', 'Facebook Sayfaları'), href: '/my-pages', Icon: FileText, adminOnly: true },
+        { label: t('Ad Accounts', 'Reklam Hesapları'), href: '/my-ad-accounts', Icon: Megaphone, adminOnly: true },
+        { label: t('Datasets', 'Veri Kümeleri'), href: '/my-datasets', Icon: Database, adminOnly: true },
+        { label: t('Catalogs', 'Kataloglar'), href: '/my-catalogs', Icon: BookOpen, adminOnly: true },
+        {
+          label: t('Instagram Accounts', 'Instagram Hesapları'),
+          href: '/my-instagram-accounts',
+          Icon: Instagram,
+          adminOnly: true,
+        },
       ],
     },
     {
@@ -89,6 +97,10 @@ function getNavSections(t: T): { title: string; items: NavItem[] }[] {
       items: [{ label: t('Webhook Logs', 'Webhook Kayıtları'), href: '/my-webhooks', Icon: Webhook }],
     },
   ];
+  // The pages themselves also redirect non-admins; this just keeps the menu clean.
+  return sections
+    .map((section) => ({ ...section, items: section.items.filter((item) => isAdmin || !item.adminOnly) }))
+    .filter((section) => section.items.length > 0);
 }
 
 function UserMenu({ userId }: { userId: string }) {
@@ -191,7 +203,7 @@ export default function SidebarLayout({ children, userId }: SidebarLayoutProps) 
   const t = useT();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const navSections = getNavSections(t);
+  const navSections = getNavSections(t, isAdminEmail(userId));
 
   return (
     <div className="h-screen flex flex-col bg-[#f5f7fb] overflow-hidden">

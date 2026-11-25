@@ -4,7 +4,9 @@
 // LICENSE file in the root directory of this source tree.
 
 import { Megaphone } from 'lucide-react';
+import { redirect } from 'next/navigation';
 
+import { isAdminEmail } from '@/lib/admin';
 import { auth } from '@/lib/auth';
 import { getAdAccounts, getAppDetails } from '@/app/api/beUtils';
 import type { AdAccountWithDetails } from '@/app/types/api';
@@ -17,6 +19,8 @@ import { getT } from '@/app/i18n/server';
 export default async function MyAdAccounts() {
   const session = await auth.getSession();
   if (!session) return <LoggedOut />;
+  // Admin-only section; other users are sent to the home page.
+  if (!isAdminEmail(session.user.email)) redirect('/');
 
   const userId = session.user.email;
   const t = await getT();

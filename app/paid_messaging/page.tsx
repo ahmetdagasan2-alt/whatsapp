@@ -3,6 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
+import { isAdminEmail } from '@/lib/admin';
 import { auth } from '@/lib/auth';
 import { getWabas, getAppDetails } from '@/app/api/beUtils';
 import type { WabaClientData } from '@/app/types/api';
@@ -12,10 +13,13 @@ import PaidMessagingDashboard from '@/app/components/PaidMessagingDashboard';
 import publicConfig from '@/app/publicConfig';
 import { getT } from '@/app/i18n/server';
 import { Mail } from 'lucide-react';
+import { redirect } from 'next/navigation';
 
 export default async function PaidMessaging() {
   const session = await auth.getSession();
   if (!session) return <LoggedOut />;
+  // Admin-only section; other users are sent to the home page.
+  if (!isAdminEmail(session.user.email)) redirect('/');
 
   const userId = session.user.email;
   const t = await getT();

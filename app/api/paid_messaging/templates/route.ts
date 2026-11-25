@@ -6,11 +6,11 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { getTokenForWabaByUser, getMessageTemplates, getTemplateGatingData } from '@/app/api/beUtils';
-import { withAuth } from '@/app/api/authWrapper';
+import { withAdmin } from '@/app/api/authWrapper';
 import type { AuthSession } from '@/app/api/authWrapper';
 import publicConfig from '@/app/publicConfig';
 
-export const GET = withAuth(async function templatesRoute(request: NextRequest, session: AuthSession) {
+export const GET = withAdmin(async function templatesRoute(request: NextRequest, session: AuthSession) {
   try {
     const { searchParams } = new URL(request.url);
     const wabaId = searchParams.get('waba_id');

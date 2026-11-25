@@ -6,13 +6,13 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
 import { getTokenForWabaByUser, sendTemplateMessage, checkWabaPaymentMethod } from '@/app/api/beUtils';
-import { withAuth } from '@/app/api/authWrapper';
+import { withAdmin } from '@/app/api/authWrapper';
 import type { AuthSession } from '@/app/api/authWrapper';
 import publicConfig from '@/app/publicConfig';
 
 const E164_REGEX = /^\+\d{7,15}$/;
 
-export const POST = withAuth(async function sendTemplateRoute(request: NextRequest, session: AuthSession) {
+export const POST = withAdmin(async function sendTemplateRoute(request: NextRequest, session: AuthSession) {
   try {
     const body = await request.json();
     const {

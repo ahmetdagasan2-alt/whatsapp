@@ -5,6 +5,7 @@
 
 import { type NextRequest, NextResponse } from 'next/server';
 
+import { isAdminEmail } from '@/lib/admin';
 import { auth } from '@/lib/auth';
 
 export interface AuthSession {
@@ -32,4 +33,14 @@ export function withAuth(handler: ApiHandler) {
       return NextResponse.json({ error: 'Internal Server Error', message: 'Authentication failed' }, { status: 500 });
     }
   };
+}
+
+/** Like withAuth, but only for admin accounts (see lib/admin.ts). */
+export function withAdmin(handler: ApiHandler) {
+  return withAuth((request, session) => {
+    if (!isAdminEmail(session.user.email)) {
+      return NextResponse.json({ error: 'Forbidden', message: 'Admin access required' }, { status: 403 });
+    }
+    return handler(request, session);
+  });
 }
