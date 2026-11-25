@@ -3,7 +3,7 @@
 // This source code is licensed under the MIT license found in the
 // LICENSE file in the root directory of this source tree.
 
-import { Phone, PhoneIncoming, PhoneOutgoing, ShieldCheck } from 'lucide-react';
+import { AlertCircle, Phone, PhoneIncoming, PhoneOutgoing, ShieldCheck } from 'lucide-react';
 import { useIntlLocale, useT } from '@/app/i18n/client';
 import type { T } from '@/app/i18n/locale';
 import { cn } from '@/lib/utils';
@@ -15,6 +15,10 @@ export type TextMessage = {
   text: string;
   direction: 'incoming' | 'outgoing';
   timestamp: number;
+  /** Client-side id for outgoing messages, used to mark them failed later. */
+  localId?: string;
+  /** Set when WhatsApp rejected an outgoing message; the text explains why. */
+  failedReason?: string;
 };
 
 export type CallEventMessage = {
@@ -131,12 +135,23 @@ export default function MessageBubble(props: Message) {
             'px-3.5 py-2 rounded-2xl text-sm leading-relaxed shadow-sm',
             isIncoming
               ? 'bg-white text-gray-800 rounded-tl-sm border border-gray-100'
-              : 'bg-indigo-600 text-white rounded-tr-sm',
+              : props.failedReason
+                ? 'bg-red-50 text-red-900 rounded-tr-sm border border-red-200'
+                : 'bg-indigo-600 text-white rounded-tr-sm',
           )}
         >
           {props.text}
         </div>
-        <span className="text-[10px] text-gray-400 mt-1 px-1">{formattedTime}</span>
+        {props.failedReason ? (
+          <span role="alert" className="flex items-start gap-1 text-[11px] text-red-600 mt-1 px-1 text-right">
+            <AlertCircle className="w-3 h-3 mt-px flex-shrink-0" />
+            <span>
+              {t('Not sent', 'Gönderilemedi')}: {props.failedReason}
+            </span>
+          </span>
+        ) : (
+          <span className="text-[10px] text-gray-400 mt-1 px-1">{formattedTime}</span>
+        )}
       </div>
     </div>
   );

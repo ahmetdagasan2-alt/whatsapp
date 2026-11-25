@@ -106,6 +106,12 @@ export type PhoneDetails = {
   is_on_biz_app: boolean;
   display_phone_number: string;
   code_verification_status: string;
+  /** Approved display name. */
+  verified_name?: string;
+  /** Review state of the display name: APPROVED, AVAILABLE_WITHOUT_REVIEW, PENDING_REVIEW, DECLINED, EXPIRED, NONE. */
+  name_status?: string;
+  /** Review state of a requested display-name change, same values as name_status. */
+  new_name_status?: string;
   wabaId: string;
   isAckBotEnabled: boolean;
 };

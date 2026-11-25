@@ -31,6 +31,14 @@ export const POST = withAuth(async function sendMessage(request: NextRequest, se
     return NextResponse.json({ status: 'ok', data: result });
   } catch (error) {
     console.error('Failed to send message:', error);
+    // Graph errors are thrown as-is by send(); pass the code on so the inbox can say why.
+    const graphError = error as { code?: number; message?: string };
+    if (typeof graphError?.code === 'number') {
+      return NextResponse.json(
+        { error: 'Failed to send message', code: graphError.code, message: graphError.message },
+        { status: 502 },
+      );
+    }
     return NextResponse.json({ error: 'Failed to send message' }, { status: 500 });
   }
 });

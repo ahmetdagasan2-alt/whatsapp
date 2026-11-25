@@ -8,7 +8,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 
 import Ably from 'ably';
-import { Phone as PhoneIcon } from 'lucide-react';
+import { AlertTriangle, Phone as PhoneIcon } from 'lucide-react';
 
 import PhoneListSidebar from '@/app/components/PhoneListSidebar';
 import ConversationView, { type Message } from '@/app/components/ConversationView';
@@ -23,6 +23,7 @@ import CallBanner, { stopRinging } from '@/app/components/CallBanner';
 import type { ActiveCallState, PermissionState } from '@/app/types/calling';
 import { cn } from '@/lib/utils';
 import { formatRemainingRequests } from '@/app/utils/calling';
+import { displayNameWarning, sendFailureReason } from '@/app/utils/whatsappStatus';
 
 type ChatMeta = {
   displayName: string;
@@ -314,9 +315,27 @@ export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
     });
   }, []);
 
+  // Marks an outgoing message as rejected so the bubble shows why it wasn't sent.
+  const markMessageFailed = useCallback((phoneId: string, chatId: string, localId: string, reason: string) => {
+    setAllMessages((prev) => {
+      const chatMsgs = prev[phoneId]?.[chatId];
+      if (!chatMsgs) return prev;
+      return {
+        ...prev,
+        [phoneId]: {
+          ...prev[phoneId],
+          [chatId]: chatMsgs.map((m) =>
+            m.type === 'text' && m.localId === localId ? { ...m, failedReason: reason } : m,
+          ),
+        },
+      };
+    });
+  }, []);
+
   // Send message handler
   const handleSendMessage = useCallback(
     (phone: PhoneDetails, chatId: string, text: string) => {
+      const localId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
       // Only update local inbox state for CONNECTED phones — prevents chats from
       // leaking into the inbox of phones that are Pending or Disconnected.
       if (phoneStatusesRef.current[phone.id] === 'CONNECTED') {
@@ -325,6 +344,7 @@ export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
           text,
           direction: 'outgoing',
           timestamp: Date.now(),
+          localId,
         });
         addChat(phone.id, chatId, allChats[phone.id]?.[chatId]?.displayName ?? chatId, text);
       }
@@ -338,17 +358,23 @@ export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
           dest_phone: chatId,
           message_content: text,
         }),
-      }).catch((error) => {
-        console.error('Failed to send message:', error);
-        addMessage(phone.id, chatId, {
-          type: 'text',
-          text: tRef.current('Failed to send message', 'Mesaj gönderilemedi'),
-          direction: 'outgoing',
-          timestamp: Date.now(),
+      })
+        .then(async (res) => {
+          if (res.ok) return;
+          const data: { code?: number; message?: string } = await res.json().catch(() => ({}));
+          console.error('Failed to send message:', res.status, data);
+          const reason =
+            data.code !== undefined
+              ? sendFailureReason(tRef.current, data.code, data.message)
+              : tRef.current(`Server error (${res.status})`, `Sunucu hatası (${res.status})`);
+          markMessageFailed(phone.id, chatId, localId, reason);
+        })
+        .catch((error) => {
+          console.error('Failed to send message:', error);
+          markMessageFailed(phone.id, chatId, localId, sendFailureReason(tRef.current));
         });
-      });
     },
-    [addMessage, addChat, allChats],
+    [addMessage, addChat, allChats, markMessageFailed],
   );
 
   const handleAcceptCall = useCallback(async () => {
@@ -899,7 +925,12 @@ export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
                     {selectedPhone.display_phone_number.replace(/\D/g, '').slice(-2)}
                   </div>
                   <div>
-                    <div className="text-sm font-semibold text-gray-900">{selectedPhone.display_phone_number}</div>
+                    <div className="text-sm font-semibold text-gray-900">
+                      {selectedPhone.display_phone_number}
+                      {selectedPhone.verified_name && (
+                        <span className="ml-2 font-normal text-gray-500">{selectedPhone.verified_name}</span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <span className="text-xs text-gray-400">{t('WhatsApp Business Account', 'WhatsApp İşletme Hesabı')}</span>
                       <span
@@ -925,6 +956,28 @@ export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
                   <CallingStatus key={'cs-' + selectedPhone.id} phone={selectedPhone} />
                 </div>
               </div>
+
+              {/* Display-name review state — an unapproved name blocks sending */}
+              {(() => {
+                const warning = displayNameWarning(t, selectedPhone);
+                if (!warning) return null;
+                return (
+                  <div
+                    role="status"
+                    className={cn(
+                      'px-5 py-2 flex items-start gap-2 text-xs border-b flex-shrink-0',
+                      warning.level === 'error'
+                        ? 'bg-red-50 border-red-100 text-red-700'
+                        : 'bg-amber-50 border-amber-100 text-amber-800',
+                    )}
+                  >
+                    <AlertTriangle className="w-3.5 h-3.5 mt-px flex-shrink-0" />
+                    <span>
+                      <span className="font-semibold">{warning.text}.</span> {warning.hint}
+                    </span>
+                  </div>
+                );
+              })()}
 
               {/* Listening status bar */}
               <div

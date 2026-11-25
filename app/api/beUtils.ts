@@ -342,7 +342,7 @@ export async function getClientPhones(userId: string): Promise<ClientPhone[]> {
 
 async function getPhoneDetails(phoneId: string, accessToken: string, wabaId: string): Promise<PhoneDetails> {
   const data = await graphApiWrapperGet(
-    `/${phoneId}?fields=status,account_mode,certificate,is_on_biz_app,display_phone_number,code_verification_status`,
+    `/${phoneId}?fields=status,account_mode,certificate,is_on_biz_app,display_phone_number,code_verification_status,verified_name,name_status,new_name_status`,
     accessToken,
   );
   data.wabaId = wabaId;
