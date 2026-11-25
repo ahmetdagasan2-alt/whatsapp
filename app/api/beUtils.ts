@@ -739,10 +739,12 @@ async function graphApiWrapperPost(
 //////////////////////////////////////////////////////////
 
 export async function getAckBotStatus(phoneId: string): Promise<boolean> {
-  const { rows }: { rows: { is_ack_bot_enabled: string }[] } =
+  const { rows }: { rows: { is_ack_bot_enabled: boolean | string | null }[] } =
     await sql`SELECT is_ack_bot_enabled FROM phones WHERE phone_id = ${phoneId}`;
-  const isAckBotEnabled = rows[0]?.is_ack_bot_enabled === 'true';
-  return isAckBotEnabled;
+  // The column is BOOLEAN, so Postgres returns a real boolean; accept text forms
+  // too in case a deployment created the column as VARCHAR.
+  const value = rows[0]?.is_ack_bot_enabled;
+  return value === true || value === 'true' || value === 't';
 }
 
 export async function getAckBotMessage(phoneId: string, userId?: string): Promise<string> {
@@ -763,19 +765,25 @@ export async function setAckBotStatus(
   userId: string,
   ackBotMessage?: string,
 ): Promise<SqlResult> {
-  if (ackBotMessage !== undefined) {
-    return await sql`
-            INSERT INTO phones (phone_id, is_ack_bot_enabled, ack_bot_message, user_id)
-            VALUES (${phoneId}, ${isAckBotEnabled}, ${ackBotMessage}, ${userId})
-            ON CONFLICT (phone_id)
-            DO UPDATE SET is_ack_bot_enabled = EXCLUDED.is_ack_bot_enabled, ack_bot_message = EXCLUDED.ack_bot_message, user_id = EXCLUDED.user_id
+  // Update-then-insert instead of ON CONFLICT: the documented `phones` table has no
+  // UNIQUE constraint on phone_id, which makes ON CONFLICT (phone_id) fail.
+  const updated =
+    ackBotMessage !== undefined
+      ? await sql`
+            UPDATE phones
+            SET is_ack_bot_enabled = ${isAckBotEnabled}, ack_bot_message = ${ackBotMessage}, user_id = ${userId}
+            WHERE phone_id = ${phoneId}
+        `
+      : await sql`
+            UPDATE phones
+            SET is_ack_bot_enabled = ${isAckBotEnabled}, user_id = ${userId}
+            WHERE phone_id = ${phoneId}
         `;
-  }
+  if ((updated.rowCount ?? 0) > 0) return updated;
+
   return await sql`
-        INSERT INTO phones (phone_id, is_ack_bot_enabled, user_id)
-        VALUES (${phoneId}, ${isAckBotEnabled}, ${userId})
-        ON CONFLICT (phone_id)
-        DO UPDATE SET is_ack_bot_enabled = EXCLUDED.is_ack_bot_enabled, user_id = EXCLUDED.user_id
+        INSERT INTO phones (phone_id, is_ack_bot_enabled, ack_bot_message, user_id)
+        VALUES (${phoneId}, ${isAckBotEnabled}, ${ackBotMessage ?? ''}, ${userId})
     `;
 }
 
