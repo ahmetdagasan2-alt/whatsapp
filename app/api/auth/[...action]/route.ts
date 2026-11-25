@@ -51,7 +51,9 @@ export async function POST(request: NextRequest, { params }: Context) {
     const result = await handler(body);
     return NextResponse.json({ ok: true, ...(result as object | undefined) });
   } catch (err) {
-    if (err instanceof AuthError) return NextResponse.json({ error: err.code }, { status: err.status });
+    if (err instanceof AuthError) {
+      return NextResponse.json({ error: err.code, detail: err.detail }, { status: err.status });
+    }
     console.error(`[auth] ${action} failed:`, err);
     return NextResponse.json({ error: 'server_error' }, { status: 500 });
   }

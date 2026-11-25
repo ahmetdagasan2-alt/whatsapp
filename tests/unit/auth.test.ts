@@ -15,6 +15,7 @@ const db = vi.hoisted(() => ({
 }));
 const sentCodes = vi.hoisted(() => [] as { phone: string; code: string }[]);
 const sessions = vi.hoisted(() => [] as { email: string }[]);
+const sendFailure = vi.hoisted(() => ({ metaCode: undefined as number | undefined }));
 
 vi.mock('@/lib/auth/db', () => ({
   findUserByEmail: async (email: string) => db.users.find((u) => u.email === email) ?? null,
@@ -69,6 +70,10 @@ vi.mock('@/lib/auth/db', () => ({
 vi.mock('@/lib/auth/otp', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/auth/otp')>()),
   sendOtpViaWhatsApp: async (phone: string, code: string) => {
+    if (sendFailure.metaCode !== undefined) {
+      const { OtpSendError } = await import('@/lib/auth/otp');
+      throw new OtpSendError('meta error', sendFailure.metaCode);
+    }
     sentCodes.push({ phone, code });
   },
 }));
@@ -114,6 +119,7 @@ beforeEach(() => {
   db.otps.clear();
   sentCodes.length = 0;
   sessions.length = 0;
+  sendFailure.metaCode = undefined;
 });
 
 describe('password hashing', () => {
@@ -204,6 +210,34 @@ describe('signup flow', () => {
     const code = lastCode();
     await completeSignup({ requestId, code });
     await expectAuthError(completeSignup({ requestId, code }), 'invalid_code');
+  });
+});
+
+describe('OTP env values', () => {
+  it('strips quotes, whitespace and a Bearer prefix pasted with the token', async () => {
+    const { cleanEnvValue } = await import('@/lib/auth/otp');
+    expect(cleanEnvValue('  "EAAG123"\n')).toBe('EAAG123');
+    expect(cleanEnvValue("'EAAG123'")).toBe('EAAG123');
+    expect(cleanEnvValue('Bearer EAAG123')).toBe('EAAG123');
+    expect(cleanEnvValue('EAAG 123\n456')).toBe('EAAG123456');
+    expect(cleanEnvValue(undefined)).toBe('');
+  });
+});
+
+describe('WhatsApp send failures', () => {
+  it('blames our configuration for template/token errors and shows the Meta code', async () => {
+    sendFailure.metaCode = 132001; // template name does not exist in the translation
+    await expect(startSignup(validSignup)).rejects.toMatchObject({ code: 'otp_config_error', detail: '132001' });
+  });
+
+  it('blames the number only for recipient errors', async () => {
+    sendFailure.metaCode = 131026;
+    await expect(startSignup(validSignup)).rejects.toMatchObject({ code: 'otp_send_failed', detail: '131026' });
+  });
+
+  it('reports Meta throttling as a rate limit', async () => {
+    sendFailure.metaCode = 130429;
+    await expect(startSignup(validSignup)).rejects.toMatchObject({ code: 'rate_limited' });
   });
 });
 

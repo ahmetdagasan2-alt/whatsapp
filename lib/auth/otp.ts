@@ -53,16 +53,25 @@ interface OtpConfig {
   templateLanguage: string;
 }
 
+/** Tolerates values pasted with surrounding quotes, whitespace/newlines or a "Bearer " prefix. */
+export function cleanEnvValue(value: string | undefined): string {
+  return (value ?? '')
+    .trim()
+    .replace(/^(['"])([\s\S]*)\1$/, '$2')
+    .replace(/^Bearer\s+/i, '')
+    .replace(/\s+/g, '');
+}
+
 function getOtpConfig(): OtpConfig | null {
-  const phoneNumberId = process.env.WA_OTP_PHONE_NUMBER_ID?.trim();
-  const accessToken = process.env.WA_OTP_ACCESS_TOKEN?.trim();
-  const templateName = process.env.WA_OTP_TEMPLATE_NAME?.trim();
+  const phoneNumberId = cleanEnvValue(process.env.WA_OTP_PHONE_NUMBER_ID);
+  const accessToken = cleanEnvValue(process.env.WA_OTP_ACCESS_TOKEN);
+  const templateName = cleanEnvValue(process.env.WA_OTP_TEMPLATE_NAME);
   if (!phoneNumberId || !accessToken || !templateName) return null;
   return {
     phoneNumberId,
     accessToken,
     templateName,
-    templateLanguage: process.env.WA_OTP_TEMPLATE_LANGUAGE?.trim() || 'tr',
+    templateLanguage: cleanEnvValue(process.env.WA_OTP_TEMPLATE_LANGUAGE) || 'tr',
   };
 }
 
@@ -104,7 +113,22 @@ export async function sendOtpViaWhatsApp(phoneE164: string, code: string): Promi
   );
   const data = await response.json().catch(() => ({}));
   if (!response.ok || data.error) {
-    console.error('[auth] OTP send failed:', data.error?.code, data.error?.message);
-    throw new OtpSendError(data.error?.message ?? 'OTP send failed', data.error?.code);
+    const e = data.error ?? {};
+    console.error(
+      '[auth] OTP send failed:',
+      JSON.stringify({
+        status: response.status,
+        code: e.code,
+        subcode: e.error_subcode,
+        type: e.type,
+        message: e.message,
+        details: e.error_data?.details,
+        fbtrace_id: e.fbtrace_id,
+        template: config.templateName,
+        language: config.templateLanguage,
+        phoneNumberId: config.phoneNumberId,
+      }),
+    );
+    throw new OtpSendError(e.message ?? 'OTP send failed', e.code ?? response.status);
   }
 }

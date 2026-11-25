@@ -24,6 +24,7 @@ import {
   OTP_MAX_SENDS_PER_HOUR,
   OTP_RESEND_COOLDOWN_SECONDS,
   OtpNotConfiguredError,
+  OtpSendError,
   codeMatches,
   generateCode,
   generateRequestId,
@@ -44,6 +45,7 @@ export type AuthErrorCode =
   | 'phone_taken'
   | 'otp_not_configured'
   | 'otp_send_failed'
+  | 'otp_config_error'
   | 'rate_limited'
   | 'cooldown'
   | 'invalid_code'
@@ -55,6 +57,8 @@ export class AuthError extends Error {
   constructor(
     public readonly code: AuthErrorCode,
     public readonly status = 400,
+    /** Extra info safe to show the user, e.g. the Meta error code. */
+    public readonly detail?: string,
   ) {
     super(code);
   }
@@ -70,13 +74,27 @@ export function normalizeEmail(value: unknown): string {
   return typeof value === 'string' ? value.trim().toLowerCase() : '';
 }
 
+// https://developers.facebook.com/documentation/business-messaging/whatsapp/support/error-codes
+const RECIPIENT_ERROR_CODES = new Set([131026, 131021]);
+const RATE_LIMIT_ERROR_CODES = new Set([4, 80007, 130429, 131048, 131056]);
+
 async function sendCode(phoneE164: string, code: string): Promise<void> {
   if ((await countRecentSends(phoneE164)) >= OTP_MAX_SENDS_PER_HOUR) throw new AuthError('rate_limited', 429);
   try {
     await sendOtpViaWhatsApp(phoneE164, code);
   } catch (err) {
     if (err instanceof OtpNotConfiguredError) throw new AuthError('otp_not_configured', 503);
-    throw new AuthError('otp_send_failed', 502);
+    const metaCode = err instanceof OtpSendError ? err.metaCode : undefined;
+    const detail = metaCode !== undefined ? String(metaCode) : undefined;
+    // Only these mean the recipient number itself is the problem; every other
+    // Meta error is on our side (template, token, sender number, billing).
+    if (metaCode !== undefined && RECIPIENT_ERROR_CODES.has(metaCode)) {
+      throw new AuthError('otp_send_failed', 502, detail);
+    }
+    if (metaCode !== undefined && RATE_LIMIT_ERROR_CODES.has(metaCode)) {
+      throw new AuthError('rate_limited', 429, detail);
+    }
+    throw new AuthError('otp_config_error', 502, detail);
   }
 }
 

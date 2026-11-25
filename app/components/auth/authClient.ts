@@ -6,7 +6,10 @@
 import type { T } from '@/app/i18n/locale';
 
 export class AuthRequestError extends Error {
-  constructor(public readonly code: string) {
+  constructor(
+    public readonly code: string,
+    public readonly detail?: string,
+  ) {
     super(code);
   }
 }
@@ -23,12 +26,17 @@ export async function authPost<R = Record<string, unknown>>(action: string, body
     throw new AuthRequestError('network');
   }
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new AuthRequestError(data.error ?? 'server_error');
+  if (!response.ok) throw new AuthRequestError(data.error ?? 'server_error', data.detail);
   return data as R;
 }
 
 export function authErrorMessage(err: unknown, t: T): string {
-  const code = err instanceof AuthRequestError ? err.code : 'server_error';
+  const message = baseMessage(err instanceof AuthRequestError ? err.code : 'server_error', t);
+  const detail = err instanceof AuthRequestError ? err.detail : undefined;
+  return detail ? `${message} (${t('Meta error code', 'Meta hata kodu')}: ${detail})` : message;
+}
+
+function baseMessage(code: string, t: T): string {
   switch (code) {
     case 'invalid_input':
       return t('Please fill in all fields.', 'Lütfen tüm alanları doldurun.');
@@ -60,6 +68,11 @@ export function authErrorMessage(err: unknown, t: T): string {
       return t(
         'We could not send a WhatsApp code to this number. Make sure it uses WhatsApp and try again.',
         'Bu numaraya WhatsApp kodu gönderilemedi. Numaranın WhatsApp kullandığından emin olup tekrar deneyin.',
+      );
+    case 'otp_config_error':
+      return t(
+        'The verification message could not be sent because of a configuration problem on our side. Please contact Dekatre support.',
+        'Doğrulama mesajı bizim taraftaki bir ayar sorunu nedeniyle gönderilemedi. Lütfen Dekatre destek ekibiyle iletişime geçin.',
       );
     case 'rate_limited':
       return t(
