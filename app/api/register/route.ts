@@ -26,7 +26,12 @@ export const POST = withAuth(async function registerPhone(request: NextRequest, 
   } catch (err: unknown) {
     console.error('register error:', err);
     const { code, message, status } = mapGraphApiError(err);
-    return NextResponse.json({ error: true, code, message }, { status });
+    const graphError = err as { code?: number; message?: string };
+    // metaCode/metaMessage let the inbox's re-register button say exactly what Meta answered.
+    return NextResponse.json(
+      { error: true, code, message, metaCode: graphError?.code, metaMessage: graphError?.message },
+      { status },
+    );
   }
 });
 

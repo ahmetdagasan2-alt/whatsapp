@@ -23,7 +23,8 @@ import CallBanner, { stopRinging } from '@/app/components/CallBanner';
 import type { ActiveCallState, PermissionState } from '@/app/types/calling';
 import { cn } from '@/lib/utils';
 import { formatRemainingRequests } from '@/app/utils/calling';
-import { displayNameWarning, sendFailureReason } from '@/app/utils/whatsappStatus';
+import { displayNameWarning, nameStatusLabel, sendFailureReason } from '@/app/utils/whatsappStatus';
+import ReRegisterButton from '@/app/components/ReRegisterButton';
 
 type ChatMeta = {
   displayName: string;
@@ -941,6 +942,22 @@ export default function InboxLayout({ phones }: { phones: PhoneDetails[] }) {
                       >
                         {selectedPhone.is_on_biz_app ? t('SMB', 'KOBİ') : t('ENTERPRISE', 'KURUMSAL')}
                       </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mt-0.5 text-[11px] text-gray-500">
+                      <span>
+                        {t('Display name status', 'Görünen ad durumu')}:{' '}
+                        <span className="font-medium text-gray-700">{nameStatusLabel(t, selectedPhone.name_status)}</span>
+                        {selectedPhone.new_name_status && selectedPhone.new_name_status !== 'NONE' && (
+                          <>
+                            {' · '}
+                            {t('new name', 'yeni ad')}:{' '}
+                            <span className="font-medium text-gray-700">
+                              {nameStatusLabel(t, selectedPhone.new_name_status)}
+                            </span>
+                          </>
+                        )}
+                      </span>
+                      <ReRegisterButton key={'rr-' + selectedPhone.id} phoneId={selectedPhone.id} wabaId={selectedPhone.wabaId} />
                     </div>
                   </div>
                 </div>

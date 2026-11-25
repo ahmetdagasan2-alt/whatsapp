@@ -97,3 +97,26 @@ export function displayNameWarning(
   }
   return null;
 }
+
+/** Display-name review state as shown in the inbox header. */
+export function nameStatusLabel(t: T, status: string | undefined): string {
+  switch (status) {
+    case 'APPROVED':
+      return t('Approved', 'Onaylandı');
+    case 'AVAILABLE_WITHOUT_REVIEW':
+      return t('Usable without review', 'İncelemesiz kullanılabilir');
+    case 'PENDING_REVIEW':
+      return t('Pending review', 'İnceleniyor');
+    case 'DECLINED':
+      return t('Declined', 'Reddedildi');
+    case 'EXPIRED':
+      return t('Expired', 'Süresi doldu');
+    case 'NONE':
+      return t('None', 'Yok');
+    case undefined:
+    case '':
+      return t('Not reported by Meta', 'Meta bilgi vermedi');
+    default:
+      return status;
+  }
+}
