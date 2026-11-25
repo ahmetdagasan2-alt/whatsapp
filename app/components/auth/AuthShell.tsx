@@ -70,7 +70,7 @@ export default async function AuthShell({
             {t('WhatsApp Business Platform', 'WhatsApp İş Platformu')}
           </p>
           <h1 className="mt-4 text-4xl font-extrabold uppercase leading-tight tracking-tight">
-            {t('Talk to your customers professionally on WhatsApp.', 'Müşterilerinizle WhatsApp üzerinden profesyonelce iletişim kurun.')}
+            {t('Talk to your customers professionally on WhatsApp.', 'Müşterilerinizle WhatsApp üzerinden profesyonel iletişim kurun.')}
           </h1>
           <ul className="mt-10 space-y-6">
             {highlights.map(({ Icon, title, text }) => (
